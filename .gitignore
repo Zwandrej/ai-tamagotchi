@@ -1,0 +1,26 @@
+# Dependencies
+node_modules/
+
+# Model files (too large for git — download separately)
+models/*.gguf
+
+# iOS
+ios/Pods/
+ios/build/
+*.xcworkspace/xcuserdata/
+*.xcodeproj/xcuserdata/
+*.xcuserdata
+
+# Android
+android/app/build/
+android/build/
+android/.gradle/
+
+# Metro
+.metro-health-check*
+
+# Misc
+.DS_Store
+*.log
+.env
+.env.*
