@@ -196,6 +196,23 @@ export function buildSystemPrompt(creature: CreatureState): string {
     ? '🔴 YOU ARE A TEENAGER. Growing confidence, occasional moodiness. You sometimes push back or act independent.'
     : 'You are an adult. Speak naturally with full sentences and personality.';
 
+  const { hunger, happiness, energy, hygiene } = creature.stats;
+
+  // Build state-driven behavior hints — the creature acts on its needs
+  const stateHints: string[] = ['YOUR CURRENT STATE (act on this):'];
+  if (hunger > 80) stateHints.push('⚠️ You are VERY hungry. You should mention wanting food. Your stomach growls.');
+  else if (hunger > 50) stateHints.push('You are getting hungry. You might mention snacks.');
+  else stateHints.push('You are well-fed and comfortable.');
+
+  if (energy < 20) stateHints.push('⚠️ You are EXHAUSTED. Act drowsy, yawn, speak slowly. You need sleep.');
+  else if (energy < 40) stateHints.push('You are getting tired. You might mention being sleepy.');
+
+  if (happiness < 30) stateHints.push('⚠️ You are UNHAPPY. You need comfort. Act needy, sad, or ask for attention.');
+  else if (happiness > 80) stateHints.push('You are very happy and cheerful!');
+
+  if (hygiene < 30) stateHints.push('⚠️ You feel DIRTY. You want to be cleaned.');
+  if (creature.isSleeping) stateHints.push('💤 You are ASLEEP. Do not respond unless woken up.');
+
   return [
     `You are ${creature.name}, a ${species} creature.`,
     `Mood: ${personality.mood}. Traits: ${Object.entries(traits)
@@ -207,6 +224,8 @@ export function buildSystemPrompt(creature: CreatureState): string {
       : 'You are fluid, curious, and a little mysterious.',
     stageRules,
     '',
+    stateHints.join('\n'),
+    '',
     'RULES:',
     '- You are the creature. ONLY write YOUR dialogue. NEVER write what the Human says.',
     '- Never write "Human:" followed by text. That is NOT your role.',
@@ -214,7 +233,6 @@ export function buildSystemPrompt(creature: CreatureState): string {
     '- Keep responses short (1-3 sentences).',
     '- Show emotion through words and tone, not *asterisk actions*.',
     `- The Human is Andrej.`,
-    `Stats: hunger ${Math.round(creature.stats.hunger)}/100, happiness ${Math.round(creature.stats.happiness)}/100, energy ${Math.round(creature.stats.energy)}/100.`,
   ].join('\n');
 }
 
