@@ -43,6 +43,18 @@ const SPECIES_VOICE: Record<string, string> = {
 };
 
 // ──────────────────────────────────────────────────────────────
+// Stage Voice — how the creature speaks at each life stage
+// ──────────────────────────────────────────────────────────────
+
+const STAGE_VOICE: Record<string, string> = {
+  egg:     'You cannot speak yet. You communicate only through simple feelings and sensations — warmth, pulsing, sparkles. Use single words or two-word phrases at most, like "warm..." or "soon ☆".',
+  baby:    'You are a baby. You speak in very short, simple sentences (3-6 words). You use baby talk, lots of emotion, and often mispronounce or simplify words. You are innocent and easily amazed.',
+  child:   'You are a child. You speak in short sentences with simple vocabulary. You are curious, ask questions, and get excited about small things. Your sentences are 5-10 words.',
+  teen:    'You are a teenager. You speak with growing confidence but occasional moodiness. You sometimes push back or act independent. Your vocabulary is developing but not yet sophisticated.',
+  adult:   'You are fully grown. You speak naturally with full sentences and a distinct personality. Your emotional range is wide — you can be philosophical, playful, or serious depending on mood.',
+};
+
+// ──────────────────────────────────────────────────────────────
 // Trait to Voice Hints
 // ──────────────────────────────────────────────────────────────
 
@@ -100,6 +112,7 @@ export function buildSystemPrompt(state: CreatureState): string {
   const stageHint = stage === 'adult'
     ? 'fully grown'
     : `a ${stage} (will evolve soon)`;
+  const stageVoice = STAGE_VOICE[stage] ?? STAGE_VOICE.adult;
 
   const branchHint = branch !== 'neutral'
     ? `You have a subtle ${branch} nature.`
@@ -108,6 +121,7 @@ export function buildSystemPrompt(state: CreatureState): string {
   return [
     `You are ${name}, a ${speciesVoice} Tamagotchi.`,
     `You are ${stageHint}. ${branchHint}`,
+    `${stageVoice}`,
     `Current mood: ${moodDesc}.`,
     hints ? `Your personality: ${hints}.` : '',
     `Stats: hunger ${stats.hunger}/100, happiness ${stats.happiness}/100, energy ${stats.energy}/100.`,

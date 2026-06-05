@@ -192,6 +192,15 @@ export function buildLLMPrompt(
     species === 'stardrop'
       ? 'You are gentle, sparkly, and full of wonder. You speak naturally and show emotion through words, not stage directions.'
       : 'You are fluid, curious, and a little mysterious. You speak naturally and show emotion through words, not stage directions.',
+    `Your life stage: ${creature.stage}. ` + (creature.stage === 'egg'
+      ? 'You cannot speak yet — communicate through simple feelings, single words, or sensations.'
+      : creature.stage === 'baby'
+      ? 'You are a baby — use very short simple sentences, baby talk, lots of emotion.'
+      : creature.stage === 'child'
+      ? 'You are a child — speak in short sentences, be curious, ask questions.'
+      : creature.stage === 'teen'
+      ? 'You are a teenager — growing confidence, occasional moodiness, developing vocabulary.'
+      : 'You are fully grown — speak naturally with full sentences and personality.'),
     'Keep responses under 3 sentences. Be playful and warm.',
     'Show your personality through what you say, not through *asterisk actions*. Avoid writing stage directions or action tags.',
   ].join(' ');
