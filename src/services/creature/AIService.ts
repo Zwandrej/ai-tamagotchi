@@ -132,7 +132,25 @@ export async function generateResponse(
     return generateTemplateResponse(creature, userMessage);
   }
 
-  const prompt = buildLLMPrompt(creature, conversationHistory, userMessage);
+  const systemPrompt = buildLLMPrompt(creature, conversationHistory, userMessage);
+
+  // Build proper multi-message array so the chat template assigns correct roles
+  const messages: Array<{ role: string; content: string }> = [
+    { role: 'system', content: systemPrompt },
+  ];
+
+  // Add conversation history with correct role mapping
+  // 'user' → 'user', 'creature' → 'assistant'
+  const recent = conversationHistory.slice(-6);
+  for (const m of recent) {
+    messages.push({
+      role: m.role === 'user' ? 'user' : 'assistant',
+      content: m.content,
+    });
+  }
+
+  // Add current user message
+  messages.push({ role: 'user', content: userMessage });
 
   // Serialize access to the llama context — only one inference at a time
   while (_inferenceLock) {
@@ -142,7 +160,8 @@ export async function generateResponse(
 
   try {
     const result = await _context.completion({
-      messages: [{ role: 'user', content: prompt }],
+      // @ts-ignore — llama.rn types expect specific message format; runtime accepts {role, content}
+      messages,
       n_predict: 256,
       temperature: 0.8,
       top_p: 0.9,
