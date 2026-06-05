@@ -1,12 +1,8 @@
 /**
- * CreatureWidgetEntry.swift
+ * CreatureWidget.swift
  *
  * iOS Home Screen widget — creature vitals, mood, and age.
- * Reads from shared App Group UserDefaults.
- *
- * Xcode template creates CreatureWidget.swift — this uses a different
- * name so it survives the template step. Delete the auto-generated
- * CreatureWidget.swift and keep this one.
+ * Reads creature data from a JSON file in the App Group shared container.
  */
 
 import WidgetKit
@@ -26,15 +22,21 @@ struct WidgetCreatureData: Codable {
     var lastInteraction: String
 }
 
-private let suiteName = "group.com.zwitter.aitamagotchi"
-private let widgetDataKey = "widget_creature_data"
+private let appGroupId = "group.com.zwitter.aitamagotchi"
+private let widgetDataFile = "widget_creature_data.json"
 
 func loadCreatureData() -> WidgetCreatureData? {
-    guard let defaults = UserDefaults(suiteName: suiteName),
-          let json = defaults.string(forKey: widgetDataKey),
-          let data = json.data(using: .utf8)
+    guard let containerURL = FileManager.default.containerURL(
+        forSecurityApplicationGroupIdentifier: appGroupId
+    ) else { return nil }
+
+    let fileURL = containerURL.appendingPathComponent(widgetDataFile)
+
+    guard let data = try? Data(contentsOf: fileURL),
+          let creature = try? JSONDecoder().decode(WidgetCreatureData.self, from: data)
     else { return nil }
-    return try? JSONDecoder().decode(WidgetCreatureData.self, from: data)
+
+    return creature
 }
 
 struct Provider: TimelineProvider {
@@ -53,21 +55,9 @@ struct Provider: TimelineProvider {
 
     func getTimeline(in context: Context, completion: @escaping (Timeline<SimpleEntry>) -> Void) {
         let data = loadCreatureData()
-        var displayData = data
-        if var d = displayData {
-            let last = ISO8601DateFormatter().date(from: d.lastInteraction) ?? Date()
-            let hours = Date().timeIntervalSince(last) / 3600
-            if hours > 0 {
-                d.hunger = min(100, d.hunger + Int(hours * 6))
-                d.energy = max(0, d.energy - Int(hours * 4))
-                d.happiness = max(0, d.happiness - Int(hours * 3))
-                d.hygiene = max(0, d.hygiene - Int(hours * 2))
-                d.age += Float(hours / 24)
-            }
-            displayData = d
-        }
-        let entry = SimpleEntry(date: Date(), data: displayData)
-        let next = Calendar.current.date(byAdding: .minute, value: 15, to: Date())!
+        let entry = SimpleEntry(date: Date(), data: data)
+        // Refresh every minute so changes from the app appear quickly
+        let next = Calendar.current.date(byAdding: .minute, value: 1, to: Date())!
         completion(Timeline(entries: [entry], policy: .after(next)))
     }
 }

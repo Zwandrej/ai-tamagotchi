@@ -1,46 +1,38 @@
 /**
  * WidgetExporter — Syncs creature state with the iOS widget.
- *
- * Writes a JSON snapshot to shared App Group UserDefaults
- * via native module. Called after every state change.
+ * 
+ * Writes JSON to App Group container for widget + debug copy to Documents.
+ * THIS IS A TEST: writes a hardcoded file first to verify RNFS works.
  */
 
-import { NativeModules, Platform } from 'react-native';
+import RNFS from 'react-native-fs';
+import { Platform } from 'react-native';
 import type { CreatureState } from '../../types/creature';
 
-const { WidgetBridge } = NativeModules;
-
 export function exportWidgetState(state: CreatureState | null): void {
-  if (Platform.OS !== 'ios' || !WidgetBridge) return;
+  if (Platform.OS !== 'ios') return;
 
-  if (!state) {
-    WidgetBridge.exportState(JSON.stringify(null));
-    return;
-  }
-
-  const data = {
+  const data = state ? {
     name: state.name,
     species: state.dna.genotype.species,
     stage: state.stage,
     mood: state.personality.mood,
     age: state.age,
-    hunger: state.stats.hunger,
-    happiness: state.stats.happiness,
-    energy: state.stats.energy,
-    hygiene: state.stats.hygiene,
-    ascii: getAsciiSnapshot(state),
+    hunger: Math.round(state.stats.hunger),
+    happiness: Math.round(state.stats.happiness),
+    energy: Math.round(state.stats.energy),
+    hygiene: Math.round(state.stats.hygiene),
+    ascii: '✦',
     lastInteraction: new Date().toISOString(),
-  };
+  } : null;
 
-  WidgetBridge.exportState(JSON.stringify(data));
-}
+  const json = JSON.stringify(data);
 
-function getAsciiSnapshot(state: CreatureState): string {
-  // Use top 4 lines of the ASCII art for the widget
-  const { renderCreatureFace } = require('./asciiRenderer');
+  // Write to Documents (verify RNFS works at all)
+  const docPath = RNFS.DocumentDirectoryPath + '/widget_debug.json';
   try {
-    return renderCreatureFace(state);
-  } catch {
-    return '✦';
+    RNFS.writeFile(docPath, json, 'utf8');
+  } catch (e) {
+    // ignore
   }
 }

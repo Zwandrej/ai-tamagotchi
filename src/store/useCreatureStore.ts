@@ -142,7 +142,7 @@ const storeCreator: StateCreator<Store, [], []> = (_set, _get) => {
       _set({ creature: plain.creature ? { ...plain.creature } : null });
       // Persist immediately after stat decay — critical for device sleep/wake cycles
       if (plain.creature) {
-        useCreatureStore.persist.setOptions({}); // no-op to trigger re-persist
+        useCreatureStore.persist.setOptions({});
       }
     },
 

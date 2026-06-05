@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 54;
+	objectVersion = 70;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -12,6 +12,10 @@
 		761780ED2CA45674006654EE /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 761780EC2CA45674006654EE /* AppDelegate.swift */; };
 		81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */; };
 		B861C8992FCB6CED0067F27D /* (null) in Embed Foundation Extensions */ = {isa = PBXBuildFile; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		B8AAE1702FD366F000073BDD /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B861C8522FCB69E60067F27D /* WidgetKit.framework */; };
+		B8AAE1712FD366F000073BDD /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B861C8542FCB69E60067F27D /* SwiftUI.framework */; };
+		B8AAE1802FD366F100073BDD /* CreatureWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = B8AAE16F2FD366F000073BDD /* CreatureWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		B8AAE18F2FD36DD500073BDD /* WidgetBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = B8AAE18E2FD36DD500073BDD /* WidgetBridge.m */; };
 		D7374D324E5972737B2D26C1 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */; };
 /* End PBXBuildFile section */
 
@@ -20,14 +24,21 @@
 			isa = PBXContainerItemProxy;
 			containerPortal = 83CBB9F71A601CBA00E9B192 /* Project object */;
 			proxyType = 1;
-			remoteGlobalIDString = B861C8872FCB6CEC0067F27D;
+			remoteGlobalIDString = B8AAE16E2FD366F000073BDD;
+			remoteInfo = CreatureWidgetExtension;
+		};
+		B8AAE17E2FD366F100073BDD /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 83CBB9F71A601CBA00E9B192 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = B8AAE16E2FD366F000073BDD;
 			remoteInfo = CreatureWidgetExtension;
 		};
 		B8DE5EF82FCB75BE00D7693B /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 83CBB9F71A601CBA00E9B192 /* Project object */;
 			proxyType = 1;
-			remoteGlobalIDString = B8DE5EE82FCB75BD00D7693B;
+			remoteGlobalIDString = B8AAE16E2FD366F000073BDD;
 			remoteInfo = CreatureWidgetExtension;
 		};
 /* End PBXContainerItemProxy section */
@@ -40,6 +51,7 @@
 			dstSubfolderSpec = 13;
 			files = (
 				B861C8992FCB6CED0067F27D /* (null) in Embed Foundation Extensions */,
+				B8AAE1802FD366F100073BDD /* CreatureWidgetExtension.appex in Embed Foundation Extensions */,
 			);
 			name = "Embed Foundation Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -58,9 +70,27 @@
 		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = AITamagotchi/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		B861C8522FCB69E60067F27D /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
 		B861C8542FCB69E60067F27D /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
+		B8AAE16F2FD366F000073BDD /* CreatureWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = CreatureWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		B8AAE18B2FD3690200073BDD /* CreatureWidgetExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = CreatureWidgetExtension.entitlements; sourceTree = "<group>"; };
+		B8AAE18D2FD36DD500073BDD /* WidgetBridge.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = WidgetBridge.h; sourceTree = "<group>"; };
+		B8AAE18E2FD36DD500073BDD /* WidgetBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = WidgetBridge.m; sourceTree = "<group>"; };
 		B8DD2FD52FCB70D100E7A044 /* AITamagotchi.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; name = AITamagotchi.entitlements; path = AITamagotchi/AITamagotchi.entitlements; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		B8AAE18C2FD369FF00073BDD /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = B8AAE16E2FD366F000073BDD /* CreatureWidgetExtension */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		B8AAE1722FD366F000073BDD /* CreatureWidget */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (B8AAE18C2FD369FF00073BDD /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = CreatureWidget; sourceTree = "<group>"; };
+/* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		13B07F8C1A680F5B00A75B9A /* Frameworks */ = {
@@ -68,6 +98,15 @@
 			buildActionMask = 2147483647;
 			files = (
 				0C80B921A6F3F58F76C31292 /* libPods-AITamagotchi.a in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B8AAE16C2FD366F000073BDD /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B8AAE1712FD366F000073BDD /* SwiftUI.framework in Frameworks */,
+				B8AAE1702FD366F000073BDD /* WidgetKit.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -108,8 +147,12 @@
 		83CBB9F61A601CBA00E9B192 = {
 			isa = PBXGroup;
 			children = (
+				B8AAE18D2FD36DD500073BDD /* WidgetBridge.h */,
+				B8AAE18E2FD36DD500073BDD /* WidgetBridge.m */,
+				B8AAE18B2FD3690200073BDD /* CreatureWidgetExtension.entitlements */,
 				13B07FAE1A68108700A75B9A /* AITamagotchi */,
 				832341AE1AAA6A7D00B99B32 /* Libraries */,
+				B8AAE1722FD366F000073BDD /* CreatureWidget */,
 				83CBBA001A601CBA00E9B192 /* Products */,
 				2D16E6871FA4F8E400B85C8A /* Frameworks */,
 				BBD78D7AC51CEA395F1C20DB /* Pods */,
@@ -123,6 +166,7 @@
 			isa = PBXGroup;
 			children = (
 				13B07F961A680F5B00A75B9A /* AITamagotchi.app */,
+				B8AAE16F2FD366F000073BDD /* CreatureWidgetExtension.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -157,11 +201,34 @@
 			dependencies = (
 				B861C8982FCB6CED0067F27D /* PBXTargetDependency */,
 				B8DE5EF92FCB75BE00D7693B /* PBXTargetDependency */,
+				B8AAE17F2FD366F100073BDD /* PBXTargetDependency */,
 			);
 			name = AITamagotchi;
 			productName = AITamagotchi;
 			productReference = 13B07F961A680F5B00A75B9A /* AITamagotchi.app */;
 			productType = "com.apple.product-type.application";
+		};
+		B8AAE16E2FD366F000073BDD /* CreatureWidgetExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = B8AAE1842FD366F100073BDD /* Build configuration list for PBXNativeTarget "CreatureWidgetExtension" */;
+			buildPhases = (
+				B8AAE16B2FD366F000073BDD /* Sources */,
+				B8AAE16C2FD366F000073BDD /* Frameworks */,
+				B8AAE16D2FD366F000073BDD /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				B8AAE1722FD366F000073BDD /* CreatureWidget */,
+			);
+			name = CreatureWidgetExtension;
+			packageProductDependencies = (
+			);
+			productName = CreatureWidgetExtension;
+			productReference = B8AAE16F2FD366F000073BDD /* CreatureWidgetExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
 		};
 /* End PBXNativeTarget section */
 
@@ -173,7 +240,10 @@
 				LastUpgradeCheck = 1210;
 				TargetAttributes = {
 					13B07F861A680F5B00A75B9A = {
-						LastSwiftMigration = 1120;
+						LastSwiftMigration = 2650;
+					};
+					B8AAE16E2FD366F000073BDD = {
+						CreatedOnToolsVersion = 26.5;
 					};
 				};
 			};
@@ -191,6 +261,7 @@
 			projectRoot = "";
 			targets = (
 				13B07F861A680F5B00A75B9A /* AITamagotchi */,
+				B8AAE16E2FD366F000073BDD /* CreatureWidgetExtension */,
 			);
 		};
 /* End PBXProject section */
@@ -203,6 +274,13 @@
 				81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 				D7374D324E5972737B2D26C1 /* PrivacyInfo.xcprivacy in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B8AAE16D2FD366F000073BDD /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -296,7 +374,15 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B8AAE18F2FD36DD500073BDD /* WidgetBridge.m in Sources */,
 				761780ED2CA45674006654EE /* AppDelegate.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B8AAE16B2FD366F000073BDD /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -305,10 +391,17 @@
 /* Begin PBXTargetDependency section */
 		B861C8982FCB6CED0067F27D /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
+			target = B8AAE16E2FD366F000073BDD /* CreatureWidgetExtension */;
 			targetProxy = B861C8972FCB6CED0067F27D /* PBXContainerItemProxy */;
+		};
+		B8AAE17F2FD366F100073BDD /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = B8AAE16E2FD366F000073BDD /* CreatureWidgetExtension */;
+			targetProxy = B8AAE17E2FD366F100073BDD /* PBXContainerItemProxy */;
 		};
 		B8DE5EF92FCB75BE00D7693B /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
+			target = B8AAE16E2FD366F000073BDD /* CreatureWidgetExtension */;
 			targetProxy = B8DE5EF82FCB75BE00D7693B /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
@@ -320,6 +413,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = AITamagotchi/AITamagotchi.entitlements;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 47835X3JK8;
 				ENABLE_BITCODE = NO;
@@ -352,6 +446,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = AITamagotchi/AITamagotchi.entitlements;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 47835X3JK8;
 				INFOPLIST_FILE = AITamagotchi/Info.plist;
@@ -522,6 +617,99 @@
 			};
 			name = Release;
 		};
+		B8AAE1812FD366F100073BDD /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CODE_SIGN_ENTITLEMENTS = CreatureWidgetExtension.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = 47835X3JK8;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = CreatureWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = CreatureWidget;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.5;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = 1.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = com.zwitter.aitamagotchi.CreatureWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		B8AAE1822FD366F100073BDD /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CODE_SIGN_ENTITLEMENTS = CreatureWidgetExtension.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = 47835X3JK8;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = CreatureWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = CreatureWidget;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.5;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = 1.0;
+				MTL_FAST_MATH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = com.zwitter.aitamagotchi.CreatureWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -539,6 +727,15 @@
 			buildConfigurations = (
 				83CBBA201A601CBA00E9B192 /* Debug */,
 				83CBBA211A601CBA00E9B192 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		B8AAE1842FD366F100073BDD /* Build configuration list for PBXNativeTarget "CreatureWidgetExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B8AAE1812FD366F100073BDD /* Debug */,
+				B8AAE1822FD366F100073BDD /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
