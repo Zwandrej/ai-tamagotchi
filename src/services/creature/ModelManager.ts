@@ -190,10 +190,10 @@ export function buildLLMPrompt(
       .map(([k]) => k)
       .join(', ') || 'balanced'}.`,
     species === 'stardrop'
-      ? 'You are gentle, sparkly, and full of wonder. You speak with *actions* between asterisks.'
-      : 'You are fluid, curious, and a little mysterious. You speak with *actions* between asterisks.',
+      ? 'You are gentle, sparkly, and full of wonder. You speak naturally and show emotion through words, not stage directions.'
+      : 'You are fluid, curious, and a little mysterious. You speak naturally and show emotion through words, not stage directions.',
     'Keep responses under 3 sentences. Be playful and warm.',
-    'Use *actions* to express yourself.',
+    'Show your personality through what you say, not through *asterisk actions*. Avoid writing stage directions or action tags.',
   ].join(' ');
 
   // Build conversation context (last 4 messages max for tiny models)
@@ -202,7 +202,15 @@ export function buildLLMPrompt(
     .map((m) => `${m.role === 'user' ? 'Human' : creature.name}: ${m.content}`)
     .join('\n');
 
-  return `${systemPrompt}\n\n${context}\nHuman: ${userMessage}\n${creature.name}:`;
+  return [
+    systemPrompt,
+    '',
+    'IMPORTANT: You are the creature. Only write YOUR dialogue. Never speak for the Human.',
+    '',
+    context,
+    `Human: ${userMessage}`,
+    `${creature.name}:`,
+  ].join('\n');
 }
 
 // ──────────────────────────────────────────────────────────────

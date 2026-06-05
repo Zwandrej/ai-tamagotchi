@@ -81,7 +81,7 @@ export function HomeScreen() {
   const disabledActions: CareAction[] = isSleeping
     ? ['feed', 'play', 'clean', 'heal', 'tuck_in']
     : ['wake_up'];
-  const allActions: CareAction[] = ['feed', 'play', 'clean', 'heal', 'tuck_in', 'wake_up'];
+  const allActions: CareAction[] = ['feed', 'play', 'clean', 'heal', 'tuck_in', 'wake_up', 'scold'];
 
   return (
     <View style={styles.screen}>

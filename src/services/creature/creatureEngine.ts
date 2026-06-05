@@ -307,6 +307,33 @@ export function performCare(
       moodChange = 'content';
       break;
     }
+
+    case 'scold': {
+      updated.stats.happiness = clamp(updated.stats.happiness - 25, STAT_MIN, STAT_MAX);
+      updated.stats.energy = clamp(updated.stats.energy - 5, STAT_MIN, STAT_MAX);
+      updated.dna = updateCareSummary(updated.dna, 'scold', 8); // increases neglect streak
+      updated.dna = addMemory(
+        updated.dna,
+        'scolded',
+        'You scolded me. I feel hurt.',
+        -0.5,
+        'bravery',
+        'sad',
+        updated.stats,
+      );
+
+      if (updated.isSleeping) {
+        updated.isSleeping = false;
+        creatureResponse = '*startled awake* ...I was sleeping. What did I do wrong? T_T';
+      } else if (updated.stats.happiness < 30) {
+        creatureResponse = '... *ears droop* I\'m sorry. I\'ll try harder.';
+        moodChange = 'sad';
+      } else {
+        creatureResponse = 'What... what did I do? Please don\'t be angry with me.';
+        moodChange = 'sad';
+      }
+      break;
+    }
   }
 
   // Recalculate mood
@@ -492,7 +519,8 @@ export function processConversationTurn(
 
   // User sentiment has stronger effect — be kind to your creature!
   // Positive messages boost happiness, negative ones hurt
-  const impact = userSentiment * 10 + creatureSentiment * 5;
+  // Negative impact amplified (×15) so mean messages are noticeable
+  const impact = (userSentiment >= 0 ? userSentiment * 10 : userSentiment * 15) + creatureSentiment * 5;
   updated.stats.happiness = clamp(updated.stats.happiness + impact, STAT_MIN, STAT_MAX);
 
   // Track sentiment extremes as memories
@@ -543,7 +571,9 @@ function analyzeUserSentiment(text: string): number {
     'hate', 'bad', 'ugly', 'stupid', 'dumb', 'worst', 'terrible',
     'awful', 'die', 'worthless', 'annoying', 'useless', 'pathetic',
     'leave', 'go away', 'shut up', 'idiot', 'gross',
-    ':(', '>:(', '😡', '😢',
+    'i hate you', 'dislike', 'boring', 'lame', 'loser', 'fat',
+    'kill', 'disgusting', 'horrible', 'trash', 'garbage',
+    ':(', '>:(',
   ];
 
   let score = 0;

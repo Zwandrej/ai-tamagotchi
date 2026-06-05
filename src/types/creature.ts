@@ -228,7 +228,7 @@ export interface ModelInfo {
 // Care Action Types
 // ──────────────────────────────────────────────────────────────
 
-export type CareAction = 'feed' | 'play' | 'clean' | 'heal' | 'tuck_in' | 'wake_up';
+export type CareAction = 'feed' | 'play' | 'clean' | 'heal' | 'tuck_in' | 'wake_up' | 'scold';
 
 export interface CareActionResult {
   action: CareAction;

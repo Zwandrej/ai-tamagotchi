@@ -39,8 +39,16 @@ interface PersistedCreature {
   id: string;
   name: string;
   dna: CreatureState['dna'];
+  stats: CreatureState['stats'];
+  personality: CreatureState['personality'];
+  stage: CreatureState['stage'];
+  branch: CreatureState['branch'];
+  age: number;
   birthday: string;
   totalInteractions: number;
+  isSleeping: boolean;
+  lastInteraction: string;
+  isActive: boolean;
 }
 
 interface PersistedState {
@@ -55,8 +63,16 @@ function toPersisted(creature: CreatureState | null): PersistedCreature | null {
     id: creature.id,
     name: creature.name,
     dna: creature.dna,
+    stats: creature.stats,
+    personality: creature.personality,
+    stage: creature.stage,
+    branch: creature.branch,
+    age: creature.age,
     birthday: creature.birthday,
     totalInteractions: creature.totalInteractions,
+    isSleeping: creature.isSleeping,
+    lastInteraction: creature.lastInteraction,
+    isActive: creature.isActive,
   };
 }
 
@@ -124,6 +140,10 @@ const storeCreator: StateCreator<Store, [], []> = (_set, _get) => {
     ageCreature() {
       plain.ageCreature();
       _set({ creature: plain.creature ? { ...plain.creature } : null });
+      // Persist immediately after stat decay — critical for device sleep/wake cycles
+      if (plain.creature) {
+        useCreatureStore.persist.setOptions({}); // no-op to trigger re-persist
+      }
     },
 
     reset() {

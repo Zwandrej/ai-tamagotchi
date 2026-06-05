@@ -20,6 +20,7 @@ const CONFIG: Record<CareAction, { label: string; color: string }> = {
   heal: { label: 'heal', color: Term.redDim },
   tuck_in: { label: 'sleep', color: Term.greenDim },
   wake_up: { label: 'wake', color: Term.text },
+  scold: { label: 'scold', color: Term.red },
 };
 
 export function CareButton({ action, onPress, disabled = false }: CareButtonProps) {

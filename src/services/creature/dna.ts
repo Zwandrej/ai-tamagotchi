@@ -319,7 +319,7 @@ function freshCareSummary(): CareSummary {
 
 export function updateCareSummary(
   dna: CreatureDNA,
-  action: 'feed' | 'play' | 'clean',
+  action: 'feed' | 'play' | 'clean' | 'scold',
   responseTimeMinutes: number,
 ): CreatureDNA {
   const updated = deepClone(dna);

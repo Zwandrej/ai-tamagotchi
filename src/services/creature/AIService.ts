@@ -143,7 +143,7 @@ export async function generateResponse(
   try {
     const result = await _context.completion({
       messages: [{ role: 'user', content: prompt }],
-      n_predict: 120,
+      n_predict: 256,
       temperature: 0.8,
       top_p: 0.9,
     });
@@ -173,8 +173,23 @@ export function generateInternalThought(creature: CreatureState): string {
 }
 
 function cleanResponse(text: string): string {
-  return text
+  let cleaned = text
     .replace(/^["']|["']$/g, '')
     .replace(/^(\*[^*]+\*)\s*\1/, '$1')
     .trim();
+
+  // If response looks truncated (no sentence-ending punctuation near the end),
+  // trim back to the last complete sentence boundary
+  if (!cleaned.match(/[.!?]["'\u201d\u2019]*\s*$/)) {
+    const lastSentenceEnd = Math.max(
+      cleaned.lastIndexOf('.'),
+      cleaned.lastIndexOf('!'),
+      cleaned.lastIndexOf('?'),
+    );
+    if (lastSentenceEnd > cleaned.length * 0.4 && lastSentenceEnd > 10) {
+      cleaned = cleaned.substring(0, lastSentenceEnd + 1);
+    }
+  }
+
+  return cleaned;
 }
