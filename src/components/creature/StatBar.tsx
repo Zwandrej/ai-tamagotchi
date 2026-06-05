@@ -24,7 +24,7 @@ export function StatBar({ label, value, color = Term.text, invert = false }: Sta
       <View style={styles.barBg}>
         <View style={[styles.barFill, { width: `${pct}%`, backgroundColor: barColor }]} />
       </View>
-      <Text style={[styles.val, { color: barColor }]}>{pct}%</Text>
+      <Text style={[styles.val, { color: barColor }]}>{Math.round(pct)}%</Text>
     </View>
   );
 }
