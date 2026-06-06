@@ -136,26 +136,28 @@ export function HomeScreen() {
           </View>
         )}
 
-        {/* Reset — small, at the bottom, out of the way */}
-        <TouchableOpacity
-          style={styles.resetSmall}
-          onPress={() => {
-            Alert.alert(
-              'Hatch new creature?',
-              'This creature will be lost forever.',
-              [
-                { text: 'Cancel', style: 'cancel' },
-                {
-                  text: 'Reset',
-                  style: 'destructive',
-                  onPress: () => useCreatureStore.getState().reset(),
-                },
-              ],
-            );
-          }}
-        >
-          <Text style={styles.resetSmallText}>$ rm -rf ~/creature</Text>
-        </TouchableOpacity>
+        {/* Reset — matches [mem]/[chat] button style */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>$ creature --manage</Text>
+          <TouchableOpacity
+            onPress={() => {
+              Alert.alert(
+                'Hatch a new creature?',
+                'Your current creature will be lost forever.',
+                [
+                  { text: 'Cancel', style: 'cancel' },
+                  {
+                    text: 'Hatch New',
+                    style: 'destructive',
+                    onPress: () => useCreatureStore.getState().reset(),
+                  },
+                ],
+              );
+            }}
+          >
+            <Text style={styles.resetSmallText}>[hatch new]</Text>
+          </TouchableOpacity>
+        </View>
       </ScrollView>
     </View>
   );
@@ -234,11 +236,7 @@ const styles = StyleSheet.create({
   resetText: {
     color: Term.text, fontFamily: Term.font, fontSize: Term.fontSizeSm,
   },
-  resetSmall: {
-    marginTop: 8, paddingVertical: 6,
-    alignSelf: 'center',
-  },
   resetSmallText: {
-    color: Term.textDim, fontFamily: Term.font, fontSize: Term.fontSizeXs,
+    color: Term.textDim, fontFamily: Term.font, fontSize: 12,
   },
 });
