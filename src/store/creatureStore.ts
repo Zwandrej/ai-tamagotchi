@@ -79,7 +79,8 @@ export function makeCreatureStore(): CreatureStore {
 
     restore(saved: CreatureState) {
       creature = restoreCreature(saved);
-      lastThought = saved.dna.history.keyMemories.at(-1)?.tag ?? '★ ... ★';
+      const memories = saved.dna.history.keyMemories;
+      lastThought = memories.length > 0 ? (memories[memories.length - 1]?.tag ?? '★ ... ★') : '★ ... ★';
     },
 
     care(action: CareAction): CareActionResult {
