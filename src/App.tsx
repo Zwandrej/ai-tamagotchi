@@ -55,38 +55,44 @@ export default function App() {
     return () => { if (tickRef.current) clearInterval(tickRef.current); };
   }, [ageCreature]);
 
+  // Conditional rendering — when creature is restored before mount,
+  // React Navigation ignores initialRouteName changes.
+  const hasCreature = creature !== null && creature !== undefined;
+
   return (
     <NavigationContainer theme={navTheme}>
       <Stack.Navigator
-        initialRouteName={creature ? 'Home' : 'Create'}
         screenOptions={screenOptions}
       >
-        <Stack.Screen
-          name="Create"
-          component={CreateCreatureScreen}
-          options={{
-            title: 'init_creature.sh',
-            headerBackVisible: false,
-            gestureEnabled: false,
-          }}
-        />
-        <Stack.Screen
-          name="Home"
-          component={HomeScreen}
-          options={({ navigation }) => ({
-            title: `~/${creature?.name ?? 'tamagotchi'} $`,
-            headerRight: () => (
-              <View style={{ flexDirection: 'row', gap: 12 }}>
-                <TouchableOpacity onPress={() => navigation.navigate('Memory')}>
-                  <Text style={{ color: Term.textDim, fontSize: 12, fontFamily: Term.font }}>[mem]</Text>
-                </TouchableOpacity>
-                <TouchableOpacity onPress={() => navigation.navigate('Chat')}>
-                  <Text style={{ color: Term.text, fontSize: 12, fontFamily: Term.font }}>[chat]</Text>
-                </TouchableOpacity>
-              </View>
-            ),
-          })}
-        />
+        {hasCreature ? (
+          <Stack.Screen
+            name="Home"
+            component={HomeScreen}
+            options={({ navigation }) => ({
+              title: `~/${creature.name} $`,
+              headerRight: () => (
+                <View style={{ flexDirection: 'row', gap: 12 }}>
+                  <TouchableOpacity onPress={() => navigation.navigate('Memory')}>
+                    <Text style={{ color: Term.textDim, fontSize: 12, fontFamily: Term.font }}>[mem]</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={() => navigation.navigate('Chat')}>
+                    <Text style={{ color: Term.text, fontSize: 12, fontFamily: Term.font }}>[chat]</Text>
+                  </TouchableOpacity>
+                </View>
+              ),
+            })}
+          />
+        ) : (
+          <Stack.Screen
+            name="Create"
+            component={CreateCreatureScreen}
+            options={{
+              title: 'init_creature.sh',
+              headerBackVisible: false,
+              gestureEnabled: false,
+            }}
+          />
+        )}
         <Stack.Screen
           name="Chat"
           component={ChatScreen}
