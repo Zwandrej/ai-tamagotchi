@@ -1,82 +1,55 @@
 /**
  * Zustand React Hook — React bindings for the creature store.
  *
- * Wraps the plain makeCreatureStore() factory in Zustand's create()
- * with explicit MMKV persistence after every state change.
- * Also does a manual MMKV load on startup to bypass Zustand rehydration timing.
+ * Persistence: writes creature state to a JSON file in Documents.
+ * Plain file I/O via react-native-fs — no MMKV, no native modules needed.
  */
 
 import { create, type StateCreator } from 'zustand';
-import { persist, createJSONStorage } from 'zustand/middleware';
-import { MMKV } from 'react-native-mmkv';
+import RNFS from 'react-native-fs';
 import type { CreatureStore } from './creatureStore';
 import { makeCreatureStore } from './creatureStore';
 import type { CreatureState } from '../types/creature';
 
 // ──────────────────────────────────────────────────────────────
-// MMKV Storage
+// File-based persistence
 // ──────────────────────────────────────────────────────────────
 
-const storage = new MMKV({ id: 'ai-tamagotchi' });
+const SAVE_FILE = `${RNFS.DocumentDirectoryPath}/creature_save.json`;
 
-/** Save directly to MMKV — bypasses Zustand middleware */
-function forceSave(creature: CreatureState | null, lastThought: string): void {
+function toJSON(creature: CreatureState | null, lastThought: string): string {
+  return JSON.stringify({
+    creature: creature ? {
+      id: creature.id, name: creature.name, dna: creature.dna,
+      stats: creature.stats, personality: creature.personality,
+      stage: creature.stage, branch: creature.branch, age: creature.age,
+      birthday: creature.birthday, totalInteractions: creature.totalInteractions,
+      isSleeping: creature.isSleeping, lastInteraction: creature.lastInteraction,
+      isActive: creature.isActive,
+    } : null,
+    lastThought,
+  });
+}
+
+function saveToFile(creature: CreatureState | null, lastThought: string): void {
   try {
-    storage.set('ai-tamagotchi-creature', JSON.stringify({
-      creature: creature ? toPersisted(creature) : null,
-      lastThought,
-    }));
+    RNFS.writeFile(SAVE_FILE, toJSON(creature, lastThought), 'utf8');
   } catch {}
 }
 
-const mmkvStorage = {
-  getItem: (key: string) => storage.getString(key) ?? null,
-  setItem: (key: string, value: string) => storage.set(key, value),
-  removeItem: (key: string) => storage.delete(key),
-};
-
-// ──────────────────────────────────────────────────────────────
-// Persisted shape
-// ──────────────────────────────────────────────────────────────
-
-interface PersistedCreature {
-  id: string;
-  name: string;
-  dna: CreatureState['dna'];
-  stats: CreatureState['stats'];
-  personality: CreatureState['personality'];
-  stage: CreatureState['stage'];
-  branch: CreatureState['branch'];
-  age: number;
-  birthday: string;
-  totalInteractions: number;
-  isSleeping: boolean;
-  lastInteraction: string;
-  isActive: boolean;
-}
-
-interface PersistedState {
-  creature: PersistedCreature | null;
-  lastThought: string;
-}
-
-function toPersisted(creature: CreatureState | null): PersistedCreature | null {
-  if (!creature) return null;
-  return {
-    id: creature.id, name: creature.name, dna: creature.dna,
-    stats: creature.stats, personality: creature.personality,
-    stage: creature.stage, branch: creature.branch, age: creature.age,
-    birthday: creature.birthday, totalInteractions: creature.totalInteractions,
-    isSleeping: creature.isSleeping, lastInteraction: creature.lastInteraction,
-    isActive: creature.isActive,
-  };
-}
-
-function fromPersisted(p: PersistedCreature): CreatureState {
-  return {
-    ...p,
-    animation: { current: 'idle' as const, frame: 0, lastUpdated: new Date().toISOString() },
-  };
+function loadFromFile(): { creature: CreatureState | null; lastThought: string } | null {
+  try {
+    if (!RNFS.exists(SAVE_FILE)) return null;
+    const raw = RNFS.readFile(SAVE_FILE, 'utf8');
+    const parsed = JSON.parse(raw);
+    if (!parsed?.creature?.stats) return null;
+    // Fill in animation field
+    const c = parsed.creature;
+    c.animation = { current: 'idle', frame: 0, lastUpdated: new Date().toISOString() };
+    return { creature: c, lastThought: parsed.lastThought || '' };
+  } catch {
+    return null;
+  }
 }
 
 // ──────────────────────────────────────────────────────────────
@@ -84,7 +57,7 @@ function fromPersisted(p: PersistedCreature): CreatureState {
 // ──────────────────────────────────────────────────────────────
 
 interface ZustandCreatureStore extends CreatureStore {
-  _hydrate: (savedCreature: CreatureState | null, savedThought: string) => void;
+  _hydrate: (c: CreatureState | null, t: string) => void;
 }
 
 type Store = ZustandCreatureStore;
@@ -94,7 +67,7 @@ const storeCreator: StateCreator<Store, [], []> = (_set, _get) => {
 
   const update = () => {
     _set({ creature: plain.creature, lastThought: plain.lastThought });
-    forceSave(plain.creature, plain.lastThought);
+    saveToFile(plain.creature, plain.lastThought);
   };
 
   return {
@@ -105,63 +78,39 @@ const storeCreator: StateCreator<Store, [], []> = (_set, _get) => {
 
     create(species, name, seed?) { plain.create(species, name, seed); update(); },
     care(action) { const r = plain.care(action); update(); return r; },
-    age(hours) { plain.age(hours); _set({ creature: plain.creature }); forceSave(plain.creature, plain.lastThought); },
-    chat(userMessage, creatureResponse) { plain.chat(userMessage, creatureResponse); update(); },
-    setThought(thought) { plain.setThought(thought); _set({ lastThought: thought }); forceSave(plain.creature, thought); },
-    setModelId(id: string) { plain.setModelId(id); _set({ modelId: id }); },
-    ageCreature() { plain.ageCreature(); _set({ creature: plain.creature ? { ...plain.creature } : null }); forceSave(plain.creature, plain.lastThought); },
+    chat(msg, resp) { plain.chat(msg, resp); update(); },
+    setThought(t) { plain.setThought(t); _set({ lastThought: t }); saveToFile(plain.creature, t); },
+    setModelId(id) { plain.setModelId(id); _set({ modelId: id }); },
+    ageCreature() { plain.ageCreature(); _set({ creature: plain.creature ? { ...plain.creature } : null }); saveToFile(plain.creature, plain.lastThought); },
+    age(h) { plain.age(h); _set({ creature: plain.creature }); saveToFile(plain.creature, plain.lastThought); },
 
     restore(saved) {
-      const full: CreatureState = (saved as any).animation ? (saved as CreatureState) : fromPersisted(saved as PersistedCreature);
+      const full: CreatureState = (saved as any).animation ? saved as CreatureState : { ...saved, animation: { current: 'idle' as const, frame: 0, lastUpdated: new Date().toISOString() } };
       plain.restore(full);
       update();
     },
 
-    reset() { plain.reset(); _set({ creature: null, lastThought: '' }); forceSave(null, ''); },
+    reset() { plain.reset(); _set({ creature: null, lastThought: '' }); saveToFile(null, ''); },
 
-    _hydrate(savedCreature: CreatureState | null, savedThought: string) {
-      if (savedCreature) {
-        try { plain.restore(savedCreature); } catch {}
+    _hydrate(c: CreatureState | null, t: string) {
+      if (c) {
+        try { plain.restore(c); } catch {}
+        plain.lastThought = t || '';
+        _set({ creature: plain.creature, lastThought: plain.lastThought });
       }
-      plain.lastThought = savedThought || '';
-      _set({ creature: plain.creature, lastThought: plain.lastThought });
     },
   };
 };
 
-export const useCreatureStore = create<Store>()(
-  persist(storeCreator, {
-    name: 'ai-tamagotchi-creature',
-    storage: createJSONStorage(() => mmkvStorage),
-    partialize: (state) => ({
-      creature: toPersisted(state.creature),
-      lastThought: state.lastThought,
-    }) as PersistedState,
-    onRehydrateStorage: () => (state) => {
-      if (state?.creature) {
-        if (!(state.creature as any)?.stats) {
-          useCreatureStore.getState().reset();
-          return;
-        }
-        const savedCreature = fromPersisted(state.creature);
-        (state as Store)._hydrate(savedCreature, state.lastThought || '');
-      }
-    },
-  })
-);
+export const useCreatureStore = create<Store>()(storeCreator);
 
 // ──────────────────────────────────────────────────────────────
-// Manual load — reads MMKV directly, bypasses Zustand timing
+// Load on startup
 // ──────────────────────────────────────────────────────────────
 
-try {
-  const raw = storage.getString('ai-tamagotchi-creature');
-  if (raw) {
-    const parsed = JSON.parse(raw);
-    if (parsed?.creature?.stats) {
-      const c = fromPersisted(parsed.creature);
-      const t = parsed.lastThought || '';
-      setTimeout(() => { useCreatureStore.getState()._hydrate(c, t); }, 10);
-    }
-  }
-} catch {}
+const saved = loadFromFile();
+if (saved?.creature) {
+  const t = saved.lastThought;
+  const c = saved.creature;
+  setTimeout(() => { useCreatureStore.getState()._hydrate(c, t); }, 10);
+}
