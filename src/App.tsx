@@ -55,24 +55,6 @@ export default function App() {
     return () => { if (tickRef.current) clearInterval(tickRef.current); };
   }, [ageCreature]);
 
-  // Don't render until we know whether a creature exists.
-  // The 10ms setTimeout in useCreatureStore needs time to hydrate.
-  // undefined = still loading, null = no creature, object = creature exists
-  const [ready, setReady] = React.useState(false);
-  useEffect(() => {
-    // Check saved data once on mount, then show the right screen
-    const id = setTimeout(() => setReady(true), 100);
-    return () => clearTimeout(id);
-  }, []);
-
-  if (!ready) {
-    return (
-      <View style={{ flex: 1, backgroundColor: Term.bg, alignItems: 'center', justifyContent: 'center' }}>
-        <Text style={{ color: Term.textDim, fontFamily: Term.font, fontSize: 14 }}>booting...</Text>
-      </View>
-    );
-  }
-
   return (
     <NavigationContainer theme={navTheme}>
       <Stack.Navigator

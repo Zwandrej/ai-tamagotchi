@@ -108,9 +108,8 @@ export const useCreatureStore = create<Store>()(storeCreator);
 // Load on startup
 // ──────────────────────────────────────────────────────────────
 
+// Load on startup — synchronous, no timers
 const saved = loadFromFile();
 if (saved?.creature) {
-  const t = saved.lastThought;
-  const c = saved.creature;
-  setTimeout(() => { useCreatureStore.getState()._hydrate(c, t); }, 10);
+  useCreatureStore.getState()._hydrate(saved.creature, saved.lastThought);
 }
