@@ -96,9 +96,8 @@ function fromPersisted(p: PersistedCreature): CreatureState {
 // ──────────────────────────────────────────────────────────────
 // Zustand Store
 // ──────────────────────────────────────────────────────────────
-
 interface ZustandCreatureStore extends CreatureStore {
-  _hydrate: () => void;
+  _hydrate: (savedCreature: CreatureState | null, savedThought: string) => void;
 }
 
 type Store = ZustandCreatureStore;
@@ -171,8 +170,12 @@ const storeCreator: StateCreator<Store, [], []> = (_set, _get) => {
       forceSave(null, '');
     },
 
-    _hydrate() {
-      update();
+    _hydrate(savedCreature: CreatureState | null, savedThought: string) {
+      if (savedCreature) {
+        plain.restore(savedCreature);
+      }
+      plain.lastThought = savedThought;
+      _set({ creature: plain.creature, lastThought: plain.lastThought });
     },
   };
 };
@@ -192,7 +195,9 @@ export const useCreatureStore = create<Store>()(
           useCreatureStore.getState().reset();
           return;
         }
-        (state as Store)._hydrate();
+        // Restore creature into the plain store with animation field filled in
+        const savedCreature = fromPersisted(state.creature);
+        (state as Store)._hydrate(savedCreature, state.lastThought || '');
       }
     },
   })
