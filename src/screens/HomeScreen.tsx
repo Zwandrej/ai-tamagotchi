@@ -135,6 +135,27 @@ export function HomeScreen() {
             </Text>
           </View>
         )}
+
+        {/* Reset — small, at the bottom, out of the way */}
+        <TouchableOpacity
+          style={styles.resetSmall}
+          onPress={() => {
+            Alert.alert(
+              'Hatch new creature?',
+              'This creature will be lost forever.',
+              [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                  text: 'Reset',
+                  style: 'destructive',
+                  onPress: () => useCreatureStore.getState().reset(),
+                },
+              ],
+            );
+          }}
+        >
+          <Text style={styles.resetSmallText}>$ rm -rf ~/creature</Text>
+        </TouchableOpacity>
       </ScrollView>
     </View>
   );
@@ -212,5 +233,12 @@ const styles = StyleSheet.create({
   },
   resetText: {
     color: Term.text, fontFamily: Term.font, fontSize: Term.fontSizeSm,
+  },
+  resetSmall: {
+    marginTop: 8, paddingVertical: 6,
+    alignSelf: 'center',
+  },
+  resetSmallText: {
+    color: Term.textDim, fontFamily: Term.font, fontSize: Term.fontSizeXs,
   },
 });

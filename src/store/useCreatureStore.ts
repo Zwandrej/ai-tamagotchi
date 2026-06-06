@@ -2,13 +2,8 @@
  * Zustand React Hook — React bindings for the creature store.
  *
  * Wraps the plain makeCreatureStore() factory in Zustand's create()
- * so React components can subscribe to creature state reactively.
- * The plain store (makeCreatureStore) remains available for tests
- * and non-React use.
- *
- * Persistence: uses Zustand's persist middleware. Storage is
- * pluggable — defaults to an in-memory fallback. Swap to MMKV
- * via `setStorage()` when running on-device.
+ * with explicit MMKV persistence after every state change.
+ * Zustand's persist middleware alone was losing data on force-quit.
  */
 
 import { create, type StateCreator } from 'zustand';
@@ -17,13 +12,25 @@ import { MMKV } from 'react-native-mmkv';
 import type { CreatureStore } from './creatureStore';
 import { makeCreatureStore } from './creatureStore';
 import type { CreatureState } from '../types/creature';
-import { exportWidgetState } from '../services/creature/WidgetExporter';
 
 // ──────────────────────────────────────────────────────────────
-// MMKV Storage — persists to device, survives app restarts
+// MMKV Storage
 // ──────────────────────────────────────────────────────────────
 
 const storage = new MMKV({ id: 'ai-tamagotchi' });
+
+/** Save the current creature state directly to MMKV — bypasses Zustand middleware */
+function forceSave(creature: CreatureState | null, lastThought: string): void {
+  try {
+    const data = JSON.stringify({
+      creature: creature ? toPersisted(creature) : null,
+      lastThought,
+    });
+    storage.set('ai-tamagotchi-creature', data);
+  } catch (e) {
+    // silently fail — don't crash the app on save error
+  }
+}
 
 const mmkvStorage = {
   getItem: (key: string) => storage.getString(key) ?? null,
@@ -32,7 +39,7 @@ const mmkvStorage = {
 };
 
 // ──────────────────────────────────────────────────────────────
-// Persisted shape — only what survives app restarts
+// Persisted shape
 // ──────────────────────────────────────────────────────────────
 
 interface PersistedCreature {
@@ -54,7 +61,6 @@ interface PersistedCreature {
 interface PersistedState {
   creature: PersistedCreature | null;
   lastThought: string;
-  modelId: string;
 }
 
 function toPersisted(creature: CreatureState | null): PersistedCreature | null {
@@ -76,12 +82,22 @@ function toPersisted(creature: CreatureState | null): PersistedCreature | null {
   };
 }
 
+function fromPersisted(p: PersistedCreature): CreatureState {
+  return {
+    ...p,
+    animation: {
+      current: 'idle' as const,
+      frame: 0,
+      lastUpdated: new Date().toISOString(),
+    },
+  };
+}
+
 // ──────────────────────────────────────────────────────────────
 // Zustand Store
 // ──────────────────────────────────────────────────────────────
 
 interface ZustandCreatureStore extends CreatureStore {
-  /** Re-hydrate the store from a serialized state (called by persist) */
   _hydrate: () => void;
 }
 
@@ -92,7 +108,7 @@ const storeCreator: StateCreator<Store, [], []> = (_set, _get) => {
 
   const update = () => {
     _set({ creature: plain.creature, lastThought: plain.lastThought });
-    exportWidgetState(plain.creature);
+    forceSave(plain.creature, plain.lastThought);
   };
 
   return {
@@ -107,7 +123,11 @@ const storeCreator: StateCreator<Store, [], []> = (_set, _get) => {
     },
 
     restore(saved) {
-      plain.restore(saved);
+      // PersistedCreature lacks 'animation' — add it before restoring
+      const fullState: CreatureState = (saved as any).animation
+        ? (saved as CreatureState)
+        : fromPersisted(saved as PersistedCreature);
+      plain.restore(fullState);
       update();
     },
 
@@ -120,6 +140,7 @@ const storeCreator: StateCreator<Store, [], []> = (_set, _get) => {
     age(hours) {
       plain.age(hours);
       _set({ creature: plain.creature });
+      forceSave(plain.creature, plain.lastThought);
     },
 
     chat(userMessage, creatureResponse) {
@@ -130,6 +151,7 @@ const storeCreator: StateCreator<Store, [], []> = (_set, _get) => {
     setThought(thought) {
       plain.setThought(thought);
       _set({ lastThought: thought });
+      forceSave(plain.creature, thought);
     },
 
     setModelId(id: string) {
@@ -140,15 +162,13 @@ const storeCreator: StateCreator<Store, [], []> = (_set, _get) => {
     ageCreature() {
       plain.ageCreature();
       _set({ creature: plain.creature ? { ...plain.creature } : null });
-      // Persist immediately after stat decay — critical for device sleep/wake cycles
-      if (plain.creature) {
-        useCreatureStore.persist.setOptions({}); // no-op to trigger re-persist
-      }
+      forceSave(plain.creature, plain.lastThought);
     },
 
     reset() {
       plain.reset();
       _set({ creature: null, lastThought: '' });
+      forceSave(null, '');
     },
 
     _hydrate() {
@@ -167,14 +187,11 @@ export const useCreatureStore = create<Store>()(
     }) as PersistedState,
     onRehydrateStorage: () => (state) => {
       if (state?.creature) {
-        // Migration: if creature data is corrupted (missing stats), reset
         if (!(state.creature as any)?.stats) {
           console.warn('[Store] Corrupted creature data, resetting');
           useCreatureStore.getState().reset();
           return;
         }
-        // Cast: persist middleware hands us PersistedState, but _hydrate
-        // uses makeCreatureStore's internal state which is already restored
         (state as Store)._hydrate();
       }
     },
