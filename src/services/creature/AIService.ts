@@ -134,25 +134,11 @@ export async function generateResponse(
 
   const systemPrompt = buildLLMPrompt(creature, conversationHistory, userMessage);
 
-  // Build proper multi-message array so the chat template assigns correct roles
-  const messages: Array<{ role: string; content: string }> = [
-    { role: 'system', content: systemPrompt },
-  ];
+  // For Llama 3.2 1B, combine system prompt with user message
+  // in a single turn. Multi-role chat often confuses small models.
+  const combined = `${systemPrompt}\n\nUSER: ${userMessage}\n\nASSISTANT:`;
 
-  // Add conversation history with correct role mapping
-  // 'user' → 'user', 'creature' → 'assistant'
-  const recent = conversationHistory.slice(-6);
-  for (const m of recent) {
-    messages.push({
-      role: m.role === 'user' ? 'user' : 'assistant',
-      content: m.content,
-    });
-  }
-
-  // Add current user message
-  messages.push({ role: 'user', content: userMessage });
-
-  // Serialize access to the llama context — only one inference at a time
+  // Serialize access to the llama context
   while (_inferenceLock) {
     await new Promise(r => setTimeout(r, 100));
   }
@@ -160,8 +146,8 @@ export async function generateResponse(
 
   try {
     const result = await _context.completion({
-      // @ts-ignore — llama.rn types expect specific message format; runtime accepts {role, content}
-      messages,
+      // @ts-ignore
+      messages: [{ role: 'user', content: combined }],
       n_predict: 256,
       temperature: 0.8,
       top_p: 0.9,
