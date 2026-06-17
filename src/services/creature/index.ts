@@ -1,4 +1,4 @@
-export { createCreature, restoreCreature, performCare, ageCreature, processConversationTurn, exportWidgetState } from './creatureEngine';
+export { createCreature, createFromDNA, restoreCreature, performCare, ageCreature, processConversationTurn, exportWidgetState } from './creatureEngine';
 export type { WidgetState } from './creatureEngine';
 export { generateDNA, expressTraits, nudgeTraits, addMemory, exportDNAString, buildDNAExport, importDNA, validateDNA, DNAValidationError, applyEpigenetics } from './dna';
 export { buildSystemPrompt, buildPrompt, buildCarePrompt, buildIdleThoughtPrompt, formatHistory } from './promptBuilder';

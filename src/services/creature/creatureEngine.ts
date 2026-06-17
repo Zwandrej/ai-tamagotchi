@@ -16,6 +16,7 @@
 
 import type {
   CreatureState,
+  CreatureDNA,
   CreatureStats,
   CreaturePersonality,
   AnimationState,
@@ -119,6 +120,54 @@ export function createCreature(
       'first_hatch',
       `I came into existence as ${name}`,
       0.9,
+      'expressiveness',
+      'content',
+      { hunger: 20, happiness: 80, energy: 90, hygiene: 100 },
+    ),
+    stats: {
+      hunger: 20,
+      happiness: 80,
+      energy: 90,
+      hygiene: 100,
+    },
+    personality: {
+      mood: 'content',
+      moodIntensity: 0.5,
+      expressedTraits: dna.phenotype.expressedTraits,
+      memoryKeys: [],
+    },
+    stage: 'egg',
+    branch: 'neutral',
+    age: 0,
+    birthday: now,
+    animation: {
+      current: 'idle',
+      frame: 0,
+      lastUpdated: now,
+    },
+    isSleeping: false,
+    tuckedInAt: null,
+    lastInteraction: now,
+    totalInteractions: 0,
+    isActive: true,
+  };
+}
+
+/**
+ * Create a creature from inherited DNA (imported from a dead creature).
+ * Preserves genotype, epigenetic markers, and breeding history.
+ */
+export function createFromDNA(dna: CreatureDNA, name: string): CreatureState {
+  const now = new Date().toISOString();
+
+  return {
+    id: dna.id,
+    name,
+    dna: addMemory(
+      dna,
+      'hatched',
+      `${name} inherited life from ${dna.phenotype.name}`,
+      0.7,
       'expressiveness',
       'content',
       { hunger: 20, happiness: 80, energy: 90, hygiene: 100 },

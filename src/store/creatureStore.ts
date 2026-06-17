@@ -10,12 +10,14 @@
 
 import type {
   CreatureState,
+  CreatureDNA,
   CareAction,
   CareActionResult,
 } from '../types/creature';
 import type { Species } from '../constants/creatures';
 import {
   createCreature,
+  createFromDNA,
   restoreCreature,
   performCare,
   ageCreature,
@@ -35,6 +37,7 @@ export interface CreatureStore {
 
   // Actions
   create: (species: Species, name: string, seed?: number) => void;
+  createFromDNA: (dna: CreatureDNA, name: string) => void;
   restore: (saved: CreatureState) => void;
   care: (action: CareAction) => CareActionResult;
   age: (hours: number) => void;
@@ -75,6 +78,11 @@ export function makeCreatureStore(): CreatureStore {
     create(species: Species, name: string, seed?: number) {
       creature = createCreature(species, name, seed);
       lastThought = '★ ... ★';
+    },
+
+    createFromDNA(dna: CreatureDNA, name: string) {
+      creature = createFromDNA(dna, name);
+      lastThought = 'Inherited life...';
     },
 
     restore(saved: CreatureState) {

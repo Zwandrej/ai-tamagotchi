@@ -15,8 +15,10 @@ import { createCreature } from '../services/creature/creatureEngine';
 import { renderCreature } from '../services/creature/asciiRenderer';
 import { MODELS, type ModelInfo } from '../services/creature/ModelManager';
 import { isModelDownloaded, downloadModel, loadModel, getModelPath } from '../services/creature/AIService';
+import { importDNA, buildDNAExport } from '../services/creature/dna';
 import { Term } from '../theme';
 import type { Species } from '../constants/creatures';
+import type { CreatureDNA } from '../types/creature';
 
 const OPTIONS = [
   { species: 'stardrop' as Species, name: '[stardrop]', subtitle: 'gentle, sparkly, full of wonder', accent: Term.textBright },
@@ -29,8 +31,57 @@ export function CreateCreatureScreen() {
   const [modelId, setModelId] = useState<string>(MODELS[0]!.id);
   const [downloadPct, setDownloadPct] = useState<Record<string, number>>({});
   const [downloading, setDownloading] = useState<string | null>(null);
+  const [importedDNA, setImportedDNA] = useState<CreatureDNA | null>(null);
   const storeCreate = useCreatureStore((s) => s.create);
+  const storeCreateFromDNA = useCreatureStore((s) => s.createFromDNA);
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+
+  const handleImportDNA = () => {
+    Alert.prompt
+      ? Alert.prompt(
+          'Import DNA',
+          'Paste the exported DNA JSON:',
+          (text: string) => {
+            try {
+              const dna = importDNA(text);
+              // Preserve epigenetic markers at 70% strength (inheritance decay)
+              const inheritedEpi: Record<string, number> = {};
+              for (const [k, v] of Object.entries(dna.epigenome || {})) {
+                inheritedEpi[k] = Math.round(v * 0.7 * 1000) / 1000;
+              }
+              dna.epigenome = inheritedEpi;
+              dna.breeding.generation++;
+              dna.breeding.parentIds.push(dna.id);
+              setImportedDNA(dna);
+              if (dna.genotype.species) setSelected(dna.genotype.species);
+              // Suggest the parent name as default
+              setName(dna.phenotype.name ? `${dna.phenotype.name}-jr` : '');
+            } catch (err: any) {
+              Alert.alert('[err]', err.message || 'Invalid DNA');
+            }
+          },
+          'plain-text',
+          '',
+        )
+      : Alert.alert(
+          'Import DNA',
+          'DNA import requires iOS 15+. Use the [export dna] button on a dead creature first.',
+        );
+  };
+
+  const handleCreateFromDNA = async () => {
+    if (!importedDNA) return;
+    const trimmed = name.trim() || importedDNA.phenotype.name || 'spark';
+    try {
+      const model = MODELS.find(m => m.id === modelId);
+      if (model?.url && isModelDownloaded(modelId)) {
+        await loadModel(getModelPath(modelId)!, modelId);
+      }
+      // Create creature from inherited DNA (species auto-derived from genotype)
+      storeCreateFromDNA(importedDNA, trimmed);
+      navigation.replace('Home');
+    } catch (err: any) { Alert.alert('[err]', err?.message || 'Failed.'); }
+  };
 
   const handleSelectModel = async (id: string) => {
     setModelId(id);
@@ -162,18 +213,49 @@ export function CreateCreatureScreen() {
         })}
       </View>
 
+      {/* Import DNA */}
+      <TouchableOpacity
+        style={[styles.hatchBtn, {
+          backgroundColor: Term.surface,
+          borderColor: Term.textDim,
+          marginBottom: 8,
+        }]}
+        onPress={handleImportDNA}
+        activeOpacity={0.8}
+      >
+        <Text style={[styles.hatchText, { color: Term.textDim }]}>[import dna]</Text>
+      </TouchableOpacity>
+
+      {/* Show imported DNA info */}
+      {importedDNA && (
+        <View style={[styles.box, { borderColor: Term.textDim }]}>
+          <Text style={styles.label}># inherited DNA</Text>
+          <Text style={{ color: Term.text, fontFamily: Term.font, fontSize: Term.fontSizeXs }}>
+            From: {importedDNA.phenotype.name} ({importedDNA.genotype.species})
+          </Text>
+          <Text style={{ color: Term.textDim, fontFamily: Term.font, fontSize: Term.fontSizeXs }}>
+            Gen: {importedDNA.breeding.generation} | Interactions: {importedDNA.history.totalInteractions}
+          </Text>
+          <Text style={{ color: Term.textDim, fontFamily: Term.font, fontSize: Term.fontSizeXs }}>
+            Epigenetic markers inherited at 70% strength
+          </Text>
+        </View>
+      )}
+
       {/* Hatch */}
       <TouchableOpacity
         style={[styles.hatchBtn, {
           opacity: selected ? 1 : 0.4,
           borderColor: selected ? Term.text : Term.border,
         }]}
-        onPress={handleCreate}
-        disabled={!selected}
+        onPress={importedDNA ? handleCreateFromDNA : handleCreate}
+        disabled={!(importedDNA || selected)}
         activeOpacity={0.8}
       >
-        <Text style={[styles.hatchText, { color: selected ? Term.bg : Term.textDim }]}>
-          $ hatch {selected ? (name.trim() || getDefaultName(selected)) : '?'}
+        <Text style={[styles.hatchText, { color: (importedDNA || selected) ? Term.bg : Term.textDim }]}>
+          {importedDNA
+            ? `$ hatch ${name.trim() || importedDNA.phenotype.name || 'spark'} (gen ${importedDNA.breeding.generation})`
+            : `$ hatch ${selected ? (name.trim() || getDefaultName(selected)) : '?'}`}
         </Text>
       </TouchableOpacity>
     </ScrollView>

@@ -67,8 +67,9 @@ const creator: StateCreator<ZStore, [], []> = (_set, _get) => {
     get lastThought() { return plain.lastThought; },
     get modelId() { return plain.modelId; },
 
-    create(s, n, seed?) { plain.create(s, n, seed); update(); },
-    care(a) { const r = plain.care(a); update(); return r; },
+    create(species, name, seed?) { plain.create(species, name, seed); update(); },
+    createFromDNA(dna: any, name: string) { plain.createFromDNA(dna, name); update(); },
+    care(action) { const r = plain.care(action); update(); return r; },
     age(h) { plain.age(h); _set({ creature: plain.creature }); save(plain.creature, plain.lastThought); },
     chat(m, r) { plain.chat(m, r); update(); },
     setThought(t) { plain.setThought(t); _set({ lastThought: t }); save(plain.creature, t); },
