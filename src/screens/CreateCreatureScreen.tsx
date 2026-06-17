@@ -16,7 +16,6 @@ import { renderCreature } from '../services/creature/asciiRenderer';
 import { MODELS, type ModelInfo } from '../services/creature/ModelManager';
 import { isModelDownloaded, downloadModel, loadModel, getModelPath } from '../services/creature/AIService';
 import { importDNA, buildDNAExport } from '../services/creature/dna';
-import DocumentPicker from 'react-native-document-picker';
 import { Term } from '../theme';
 import type { Species } from '../constants/creatures';
 import type { CreatureDNA } from '../types/creature';
@@ -60,27 +59,6 @@ export function CreateCreatureScreen() {
       setImportText('');
     } catch (err: any) {
       Alert.alert('[err]', err.message || 'Invalid DNA');
-    }
-  };
-
-  const handlePickFile = async () => {
-    try {
-      const result = await DocumentPicker.pick({
-        type: [DocumentPicker.types.allFiles],
-      });
-      const file = result[0];
-      if (!file || !file.uri) return;
-      // Read the picked file
-      const RNFS = require('react-native-fs');
-      const content = await RNFS.readFile(
-        file.uri.replace('file://', ''),
-        'utf8',
-      );
-      setImportText(content);
-    } catch (err: any) {
-      if (!DocumentPicker.isCancel(err)) {
-        Alert.alert('[err]', 'Could not read file');
-      }
     }
   };
 
@@ -278,10 +256,7 @@ export function CreateCreatureScreen() {
       <Modal visible={showImportModal} transparent animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={styles.modalBox}>
-            <Text style={styles.label}># paste exported DNA JSON</Text>
-            <Text style={{ color: Term.textDim, fontFamily: Term.font, fontSize: 10, marginBottom: 8 }}>
-              Copy the JSON from an [export dna] share, then paste it here.
-            </Text>
+            <Text style={[styles.label, { marginBottom: 8 }]}># import DNA</Text>
             <TextInput
               style={styles.importInput}
               value={importText}
@@ -291,15 +266,7 @@ export function CreateCreatureScreen() {
               multiline
               autoFocus
             />
-            <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
-              <TouchableOpacity
-                style={[styles.modalBtn, { backgroundColor: Term.surface, borderColor: Term.textDim }]}
-                onPress={handlePickFile}
-              >
-                <Text style={[styles.modalBtnText, { color: Term.textDim, fontSize: 10 }]}>pick .json</Text>
-              </TouchableOpacity>
-            </View>
-            <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
+            <View style={{ flexDirection: 'row', gap: 8, marginTop: 10 }}>
               <TouchableOpacity
                 style={[styles.modalBtn, { backgroundColor: Term.surface, borderColor: Term.border }]}
                 onPress={() => { setShowImportModal(false); setImportText(''); }}
