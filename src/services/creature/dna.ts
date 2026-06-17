@@ -503,8 +503,8 @@ export function validateDNA(obj: unknown): string[] {
       errors.push('breeding.generation must be >= 0');
     }
     const parentIds = breeding.parentIds;
-    if (!Array.isArray(parentIds) || (parentIds.length !== 0 && parentIds.length !== 2)) {
-      errors.push('breeding.parentIds must have 0 or 2 entries');
+    if (!Array.isArray(parentIds) || parentIds.length > 2) {
+      errors.push('breeding.parentIds must have 0-2 entries');
     }
   }
 
