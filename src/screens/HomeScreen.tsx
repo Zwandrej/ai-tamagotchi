@@ -75,16 +75,24 @@ export function HomeScreen() {
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.resetBtn, { marginTop: 8, borderColor: Term.textDim }]}
-          onPress={() => {
+          onPress={async () => {
             const { buildDNAExport } = require('../services/creature/dna');
+            const RNFS = require('react-native-fs');
             const { Share } = require('react-native');
             const exp = buildDNAExport(creature);
 
-            // Share pure JSON — user saves to Files as .json, then imports via picker
-            Share.share({
-              message: exp.json,
-              title: exp.filename,
-            });
+            // Write to CachesDirectory — more share-friendly than Documents
+            const filePath = `${RNFS.CachesDirectoryPath}/${exp.filename}`;
+            await RNFS.writeFile(filePath, exp.json, 'utf8');
+            // RNFS.writeFile returns before flush; wait for it
+            await new Promise(r => setTimeout(r, 500));
+
+            try {
+              await Share.share({ url: filePath });
+            } catch {
+              // Fallback: share as text
+              Share.share({ message: exp.json, title: exp.filename });
+            }
           }}
         >
           <Text style={[styles.resetText, { color: Term.textDim }]}>[export dna]</Text>
