@@ -5,7 +5,7 @@
 import React, { useState } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity,
-  ScrollView, StyleSheet, Alert,
+  ScrollView, StyleSheet, Alert, Modal,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -32,41 +32,34 @@ export function CreateCreatureScreen() {
   const [downloadPct, setDownloadPct] = useState<Record<string, number>>({});
   const [downloading, setDownloading] = useState<string | null>(null);
   const [importedDNA, setImportedDNA] = useState<CreatureDNA | null>(null);
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [importText, setImportText] = useState('');
   const storeCreate = useCreatureStore((s) => s.create);
   const storeCreateFromDNA = useCreatureStore((s) => s.createFromDNA);
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
   const handleImportDNA = () => {
-    Alert.prompt
-      ? Alert.prompt(
-          'Import DNA',
-          'Paste the exported DNA JSON:',
-          (text: string) => {
-            try {
-              const dna = importDNA(text);
-              // Preserve epigenetic markers at 70% strength (inheritance decay)
-              const inheritedEpi: Record<string, number> = {};
-              for (const [k, v] of Object.entries(dna.epigenome || {})) {
-                inheritedEpi[k] = Math.round(v * 0.7 * 1000) / 1000;
-              }
-              dna.epigenome = inheritedEpi;
-              dna.breeding.generation++;
-              dna.breeding.parentIds.push(dna.id);
-              setImportedDNA(dna);
-              if (dna.genotype.species) setSelected(dna.genotype.species);
-              // Suggest the parent name as default
-              setName(dna.phenotype.name ? `${dna.phenotype.name}-jr` : '');
-            } catch (err: any) {
-              Alert.alert('[err]', err.message || 'Invalid DNA');
-            }
-          },
-          'plain-text',
-          '',
-        )
-      : Alert.alert(
-          'Import DNA',
-          'DNA import requires iOS 15+. Use the [export dna] button on a dead creature first.',
-        );
+    setShowImportModal(true);
+  };
+
+  const doImportDNA = () => {
+    try {
+      const dna = importDNA(importText);
+      const inheritedEpi: Record<string, number> = {};
+      for (const [k, v] of Object.entries(dna.epigenome || {})) {
+        inheritedEpi[k] = Math.round((v as number) * 0.7 * 1000) / 1000;
+      }
+      dna.epigenome = inheritedEpi;
+      dna.breeding.generation++;
+      dna.breeding.parentIds.push(dna.id);
+      setImportedDNA(dna);
+      if (dna.genotype.species) setSelected(dna.genotype.species);
+      setName(dna.phenotype.name ? `${dna.phenotype.name}-jr` : '');
+      setShowImportModal(false);
+      setImportText('');
+    } catch (err: any) {
+      Alert.alert('[err]', err.message || 'Invalid DNA');
+    }
   };
 
   const handleCreateFromDNA = async () => {
@@ -258,6 +251,41 @@ export function CreateCreatureScreen() {
             : `$ hatch ${selected ? (name.trim() || getDefaultName(selected)) : '?'}`}
         </Text>
       </TouchableOpacity>
+
+      {/* Import DNA Modal */}
+      <Modal visible={showImportModal} transparent animationType="fade">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalBox}>
+            <Text style={styles.label}># paste exported DNA JSON</Text>
+            <Text style={{ color: Term.textDim, fontFamily: Term.font, fontSize: 10, marginBottom: 8 }}>
+              Copy the JSON from an [export dna] share, then paste it here.
+            </Text>
+            <TextInput
+              style={styles.importInput}
+              value={importText}
+              onChangeText={setImportText}
+              placeholder='{ "version": "1.0", "id": "dna_...", ... }'
+              placeholderTextColor={Term.border}
+              multiline
+              autoFocus
+            />
+            <View style={{ flexDirection: 'row', gap: 8, marginTop: 10 }}>
+              <TouchableOpacity
+                style={[styles.modalBtn, { backgroundColor: Term.surface, borderColor: Term.border }]}
+                onPress={() => { setShowImportModal(false); setImportText(''); }}
+              >
+                <Text style={[styles.modalBtnText, { color: Term.textDim }]}>cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalBtn, { backgroundColor: Term.text }]}
+                onPress={doImportDNA}
+              >
+                <Text style={[styles.modalBtnText, { color: Term.bg }]}>import</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </ScrollView>
   );
 }
@@ -314,4 +342,24 @@ const styles = StyleSheet.create({
     backgroundColor: Term.text,
   },
   hatchText: { fontFamily: Term.font, fontSize: Term.fontSize, fontWeight: '700' },
+  modalOverlay: {
+    flex: 1, backgroundColor: 'rgba(0,0,0,0.8)',
+    justifyContent: 'center', padding: 20,
+  },
+  modalBox: {
+    backgroundColor: Term.surface, borderWidth: 1, borderColor: Term.border,
+    padding: 16, borderRadius: 4,
+  },
+  importInput: {
+    color: Term.text, fontFamily: Term.fontMono, fontSize: 10,
+    borderWidth: 1, borderColor: Term.border,
+    padding: 8, minHeight: 80,
+    backgroundColor: Term.bg,
+  },
+  modalBtn: {
+    flex: 1, borderWidth: 1, padding: 10, alignItems: 'center',
+  },
+  modalBtnText: {
+    fontFamily: Term.font, fontSize: Term.fontSizeSm, fontWeight: '700',
+  },
 });
