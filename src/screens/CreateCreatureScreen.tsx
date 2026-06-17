@@ -5,7 +5,7 @@
 import React, { useState } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity,
-  ScrollView, StyleSheet, Alert, Modal,
+  ScrollView, StyleSheet, Alert,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -16,6 +16,7 @@ import { renderCreature } from '../services/creature/asciiRenderer';
 import { MODELS, type ModelInfo } from '../services/creature/ModelManager';
 import { isModelDownloaded, downloadModel, loadModel, getModelPath } from '../services/creature/AIService';
 import { importDNA, buildDNAExport } from '../services/creature/dna';
+import DocumentPicker from 'react-native-document-picker';
 import { Term } from '../theme';
 import type { Species } from '../constants/creatures';
 import type { CreatureDNA } from '../types/creature';
@@ -32,19 +33,22 @@ export function CreateCreatureScreen() {
   const [downloadPct, setDownloadPct] = useState<Record<string, number>>({});
   const [downloading, setDownloading] = useState<string | null>(null);
   const [importedDNA, setImportedDNA] = useState<CreatureDNA | null>(null);
-  const [showImportModal, setShowImportModal] = useState(false);
-  const [importText, setImportText] = useState('');
   const storeCreate = useCreatureStore((s) => s.create);
   const storeCreateFromDNA = useCreatureStore((s) => s.createFromDNA);
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
-  const handleImportDNA = () => {
-    setShowImportModal(true);
-  };
-
-  const doImportDNA = () => {
+  const handleImportDNA = async () => {
     try {
-      const dna = importDNA(importText);
+      const result = await DocumentPicker.pick({
+        type: [DocumentPicker.types.allFiles],
+      });
+      const file = result[0];
+      if (!file || !file.uri) return;
+      const RNFS = require('react-native-fs');
+      const content = await RNFS.readFile(
+        file.uri.replace('file://', ''), 'utf8',
+      );
+      const dna = importDNA(content);
       const inheritedEpi: Record<string, number> = {};
       for (const [k, v] of Object.entries(dna.epigenome || {})) {
         inheritedEpi[k] = Math.round((v as number) * 0.7 * 1000) / 1000;
@@ -55,10 +59,10 @@ export function CreateCreatureScreen() {
       setImportedDNA(dna);
       if (dna.genotype.species) setSelected(dna.genotype.species);
       setName(dna.phenotype.name ? `${dna.phenotype.name}-jr` : '');
-      setShowImportModal(false);
-      setImportText('');
     } catch (err: any) {
-      Alert.alert('[err]', err.message || 'Invalid DNA');
+      if (!DocumentPicker.isCancel(err)) {
+        Alert.alert('[err]', 'Could not read DNA file');
+      }
     }
   };
 
@@ -251,38 +255,6 @@ export function CreateCreatureScreen() {
             : `$ hatch ${selected ? (name.trim() || getDefaultName(selected)) : '?'}`}
         </Text>
       </TouchableOpacity>
-
-      {/* Import DNA Modal */}
-      <Modal visible={showImportModal} transparent animationType="fade">
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalBox}>
-            <Text style={[styles.label, { marginBottom: 8 }]}># import DNA</Text>
-            <TextInput
-              style={styles.importInput}
-              value={importText}
-              onChangeText={setImportText}
-              placeholder='{ "version": "1.0", "id": "dna_...", ... }'
-              placeholderTextColor={Term.border}
-              multiline
-              autoFocus
-            />
-            <View style={{ flexDirection: 'row', gap: 8, marginTop: 10 }}>
-              <TouchableOpacity
-                style={[styles.modalBtn, { backgroundColor: Term.surface, borderColor: Term.border }]}
-                onPress={() => { setShowImportModal(false); setImportText(''); }}
-              >
-                <Text style={[styles.modalBtnText, { color: Term.textDim }]}>cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.modalBtn, { backgroundColor: Term.text }]}
-                onPress={doImportDNA}
-              >
-                <Text style={[styles.modalBtnText, { color: Term.bg }]}>import</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
     </ScrollView>
   );
 }
