@@ -45,9 +45,11 @@ export function CreateCreatureScreen() {
       const file = result[0];
       if (!file || !file.uri) return;
       const RNFS = require('react-native-fs');
-      const content = await RNFS.readFile(
+      let content = await RNFS.readFile(
         file.uri.replace('file://', ''), 'utf8',
       );
+      // Strip BOM and whitespace that iOS may add to shared files
+      content = content.replace(/^\uFEFF/, '').trim();
       const dna = importDNA(content);
       const inheritedEpi: Record<string, number> = {};
       for (const [k, v] of Object.entries(dna.epigenome || {})) {
