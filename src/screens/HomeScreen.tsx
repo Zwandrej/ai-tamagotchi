@@ -81,18 +81,13 @@ export function HomeScreen() {
             const { Share } = require('react-native');
             const exp = buildDNAExport(creature);
 
-            // Write to CachesDirectory — more share-friendly than Documents
-            const filePath = `${RNFS.CachesDirectoryPath}/${exp.filename}`;
+            // Write to Documents then share via file:// URL
+            const filePath = `${RNFS.DocumentDirectoryPath}/${exp.filename}`;
             await RNFS.writeFile(filePath, exp.json, 'utf8');
-            // RNFS.writeFile returns before flush; wait for it
-            await new Promise(r => setTimeout(r, 500));
-
-            try {
-              await Share.share({ url: filePath });
-            } catch {
-              // Fallback: share as text
-              Share.share({ message: exp.json, title: exp.filename });
-            }
+            await Share.share({
+              url: `file://${filePath}`,
+              title: exp.filename,
+            });
           }}
         >
           <Text style={[styles.resetText, { color: Term.textDim }]}>[export dna]</Text>
