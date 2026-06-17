@@ -108,6 +108,12 @@ export interface CreatureDNA {
     parentIds: string[];
     mutationRate: number;
   };
+
+  /** Epigenome — memory-driven gene expression modifiers.
+   *  Key = trait name (e.g. "playfulness"), value = modifier (-1.0 to 1.0).
+   *  Happy memories boost social traits; neglect/trauma boost resilience.
+   *  These modifiers are INHERITED (~70%) when DNA is imported. */
+  epigenome: Record<string, number>;
 }
 
 // ──────────────────────────────────────────────────────────────

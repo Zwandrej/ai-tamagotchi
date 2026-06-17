@@ -127,12 +127,54 @@ export function generateDNA(
     phenotype,
     history,
     breeding,
+    epigenome: {},
   };
 
   // Compute ID from content
   dna.id = computeDNAId(dna);
 
   return dna;
+}
+
+// ──────────────────────────────────────────────────────────────
+// Epigenome — memories reshape gene expression over time
+// ──────────────────────────────────────────────────────────────
+
+/** Maps memory tags to which traits they affect and how strongly */
+const EPIGENETIC_MAP: Record<string, Record<string, number>> = {
+  fed:          { contentment: 0.02, playfulness: 0.01 },
+  played:       { playfulness: 0.03, social: 0.02, curiosity: 0.01 },
+  loved:        { social: 0.04, playfulness: 0.02, empathy: 0.02 },
+  cleaned:      { resilience: 0.01, contentment: 0.01 },
+  healed:       { resilience: 0.03 },
+  hatched:      { curiosity: 0.02, social: 0.02 },
+  first_hatch:  { curiosity: 0.03, playfulness: 0.03 },
+  scolded:      { resilience: 0.03, independence: 0.02, social: -0.02 },
+  neglected:    { resilience: 0.04, independence: 0.03, social: -0.04, contentment: -0.02 },
+  sick:         { resilience: 0.05, empathy: 0.02 },
+};
+
+/**
+ * Apply a memory's emotional impact as an epigenetic shift.
+ * Positive memories boost social/playful traits. Negative/neglect memories boost resilience.
+ * Modifiers are capped at -1.0 to +1.0.
+ */
+export function applyEpigenetics(
+  currentEpi: Record<string, number>,
+  tag: string,
+  impact: number,
+): Record<string, number> {
+  const shifts = EPIGENETIC_MAP[tag];
+  if (!shifts) return currentEpi;
+
+  const updated = { ...currentEpi };
+  for (const [trait, baseShift] of Object.entries(shifts)) {
+    const current = updated[trait] ?? 0;
+    // Impact amplifies the shift: negative memories reverse positive traits
+    const shift = baseShift * Math.sign(impact) * Math.min(Math.abs(impact), 1);
+    updated[trait] = Math.max(-1, Math.min(1, current + shift));
+  }
+  return updated;
 }
 
 // ──────────────────────────────────────────────────────────────
@@ -296,6 +338,9 @@ export function addMemory(
     (a, b) => Math.abs(b.impact) - Math.abs(a.impact),
   );
   updated.history.keyMemories = updated.history.keyMemories.slice(0, MAX_MEMORIES);
+
+  // Apply epigenetic shift from this memory
+  updated.epigenome = applyEpigenetics(updated.epigenome, tag, impact);
 
   // Recompute ID
   updated.id = computeDNAId(updated);
