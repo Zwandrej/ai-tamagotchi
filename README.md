@@ -13,13 +13,17 @@ A companion creature with real personality, memory, DNA, and evolution — drive
 | 🖥️ **Terminal Aesthetic** | Retro CRT-inspired amber-on-black interface. Creature lives in a command line. |
 | 🧠 **On-Device AI** | Real LLM-powered conversations via llama.cpp (`llama.rn`). DNA, personality, mood, stage, and state injected into every response. |
 | 🗣️ **Stage-Aware Voice** | Egg → baby talk → child curiosity → teen moodiness → adult personality. Speech evolves with the creature. |
-| 📊 **State-Driven Dialogue** | Hunger, energy, happiness, hygiene all affect how the creature talks. It complains when hungry, yawns when tired, begs when sad. |
+| 📊 **State-Driven Dialogue** | Hunger, energy, happiness, hygiene all affect how the creature talks. Template fallback matches LLM voice rules. |
 | 🍎 **Care System** | Feed, play, clean, heal, tuck in, wake up — plus **scold** (negative interaction, -25 happiness). Stats decay over real time. |
+| ⏱️ **Sleep Cooldown** | Tuck in for 5+ minutes to recover energy. Wake too soon and they're grumpy — no infinite energy loop. |
 | 🧬 **Creature DNA** | Every creature has a unique genetic identity. Traits, personality, and appearance procedurally generated. |
 | 🧠 **Episodic Memory** | Rich event-based memories with mood context and stat snapshots. Memory viewer screen. |
-| 💬 **Conversation** | Chat affects the creature — kind words boost happiness, mean words hurt (×15 negative multiplier). Terminal-style `$`/`#` prompts. |
+| 🧫 **Epigenome** | Memories reshape gene expression over time. Happy memories → +social. Neglect → +resilience. Modifiers inherited at 70% strength. |
+| 💬 **Conversation** | Chat affects the creature — kind words boost happiness, mean words hurt (×15 negative multiplier). Combined prompt format for reliable small-model responses. |
 | 🦋 **Evolution** | Egg → Baby → Child → Teen → Adult (~18 days real time). 4 branches: Angel, Gremlin, Trickster, Sage. |
 | 💀 **Death** | Neglect leads to consequences — the creature can pass away if 3+ stats hit zero. |
+| 🧬 **DNA Export** | On death, export the creature's full DNA as a `.json` file via iOS Share sheet. Includes genotype, epigenome, memories. |
+| 📥 **DNA Import** | Hatch from inherited DNA — pick a `.json` file, species auto-detected. Single-parent inheritance with 70% epigenetic decay. |
 | ⏱️ **Real-time Clock** | Stats decay every 30s while the app is open. Age passes in real world time. |
 | 💾 **Persistent Storage** | MMKV — full creature state (stats, personality, stage, sleep) survives restarts and phone reboots. |
 | 🎨 **Voidling Egg Icon** | Dark inky egg with glowing amber eyes — pixel art on the terminal palette. |
@@ -36,6 +40,7 @@ A companion creature with real personality, memory, DNA, and evolution — drive
 | **State** | Zustand + MMKV (persistent) |
 | **Navigation** | React Navigation (native stack) |
 | **Models** | GGUF format, downloaded via `react-native-fs` |
+| **File Picker** | `react-native-document-picker` (DNA import) |
 | **Language** | TypeScript (strict) |
 | **GPU** | Metal (Apple GPU) — ~50 tok/s on A18 Pro |
 
@@ -77,7 +82,7 @@ ai-tamagotchi/
 │   └── theme.ts           # Terminal color palette
 ├── ios/                   # Xcode project, Pods, WidgetBridge
 ├── models/                # Downloaded GGUF files (gitignored)
-├── __tests__/             # Jest test suites (74 tests)
+├── __tests__/             # Jest test suites
 └── index.js               # App entry
 ```
 
@@ -91,9 +96,9 @@ Pure TypeScript (`creatureEngine.ts`). Every interaction produces a new immutabl
 ### AI Pipeline
 1. Model selected at creation → downloads GGUF from HuggingFace
 2. On hatch → `llama.rn` loads model into memory
-3. Chat → multi-message format with proper system/user/assistant roles
+3. Chat → combined prompt format: system instructions + conversation history + `USER: ... \n\n ASSISTANT:`
 4. System prompt includes: DNA, personality, stage voice, state-driven behavior hints
-5. Inference on-device, template fallback if no model
+5. Inference on-device, stage-aware template fallback if no model
 
 ### Stage-Aware Voice
 The system prompt injects stage-specific speaking rules:
@@ -110,18 +115,23 @@ Hunger, energy, happiness, and hygiene are injected as natural-language behavior
 - Happiness < 30 → "⚠️ UNHAPPY. Need comfort."
 - Hygiene < 30 → "⚠️ DIRTY. Want to be cleaned."
 
-### Memory System
-`MemoryGene`: id, tag, event, impact, traitAffected, mood, statsAtTime, timestamp. Capped at 20. View in Memory screen.
+### DNA & Inheritance
+- **Genotype**: procedural species, seed, base stats, trait alleles
+- **Phenotype**: expressed traits, appearance, stage, branch
+- **Epigenome**: `Record<string, number>` — memory-driven modifiers (-1.0 to +1.0)
+- **Export**: `buildDNAExport()` → JSON with full DNA + life summary
+- **Import**: `createFromDNA()` → preserves genotype, breeding history, 70% epigenetic decay
+- **Validator**: allows 0, 1, or 2 parent IDs (supports inheritance + future breeding)
 
 ### Evolution
 - Egg (12h) → Baby (2d) → Child (5d) → Teen (10d) → Adult (∞)
 - Branches: Angel (kindness), Gremlin (neglect), Trickster (playfulness+genes), Sage (conversations)
 
 ### Death
-Energy at 0 + 3 critical stats → creature passes away → gravestone screen → reset option.
+Energy at 0 + 3 critical stats → creature passes away → gravestone screen → export DNA or hatch new.
 
 ### Persistence
-- **MMKV**: Full creature state (stats, personality, stage, branch, age, sleep state)
+- **MMKV**: Full creature state (stats, personality, stage, branch, age, sleep state, epigenome)
 - **RNFS**: Downloaded GGUF models
 - **Session-only**: Chat messages
 
@@ -132,13 +142,17 @@ Energy at 0 + 3 critical stats → creature passes away → gravestone screen �
 - [x] Terminal-themed UI
 - [x] Core creature state machine
 - [x] DNA system & ASCII renderer
-- [x] llama.cpp integration with multi-message chat format
+- [x] llama.cpp integration with combined prompt format
 - [x] Chat with LLM + sentiment effects (positive & negative)
+- [x] Stage-aware template fallback (matches LLM voice rules)
 - [x] Care system (7 actions: feed, play, clean, heal, tuck_in, wake_up, scold)
+- [x] Sleep cooldown (5 min minimum for energy recovery)
 - [x] Stage-aware creature voice (speech evolves with age)
 - [x] State-driven dialogue (hunger/energy/happiness affect conversation)
 - [x] Evolution (5 stages, 4 branches)
-- [x] Death mechanic
+- [x] Death mechanic + DNA export
+- [x] DNA import with file picker + single-parent inheritance
+- [x] Epigenome — memories reshape gene expression
 - [x] Episodic memory + viewer
 - [x] Model download & management
 - [x] MMKV persistence (full state, survives reboots)
@@ -148,7 +162,7 @@ Energy at 0 + 3 critical stats → creature passes away → gravestone screen �
 - [ ] iOS Widget
 - [ ] Android support
 - [ ] Notifications
-- [ ] DNA export & breed mechanics
+- [ ] Two-parent breeding mechanics
 - [ ] Procedural species generation
 
 ---
