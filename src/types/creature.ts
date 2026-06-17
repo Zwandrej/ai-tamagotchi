@@ -162,6 +162,7 @@ export interface CreatureState {
   totalInteractions: number;
   isSleeping: boolean;
   isActive: boolean;
+  tuckedInAt: string | null;  // ISO timestamp when put to sleep; null when awake
 }
 
 // ──────────────────────────────────────────────────────────────

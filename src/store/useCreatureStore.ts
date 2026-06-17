@@ -26,6 +26,7 @@ function save(creature: CreatureState | null, thought: string): void {
       birthday: creature.birthday,
       totalInteractions: creature.totalInteractions,
       isSleeping: creature.isSleeping,
+      tuckedInAt: creature.tuckedInAt,
       lastInteraction: creature.lastInteraction,
       isActive: creature.isActive,
     } : null,

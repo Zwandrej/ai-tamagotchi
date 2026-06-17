@@ -145,6 +145,7 @@ export function createCreature(
       lastUpdated: now,
     },
     isSleeping: false,
+    tuckedInAt: null,
     lastInteraction: now,
     totalInteractions: 0,
     isActive: true,
@@ -295,6 +296,7 @@ export function performCare(
 
     case 'tuck_in': {
       updated.isSleeping = true;
+      updated.tuckedInAt = new Date().toISOString();
       creatureResponse = '★ zZz... Goodnight... zZz ★';
       moodChange = 'sleeping';
       break;
@@ -302,8 +304,20 @@ export function performCare(
 
     case 'wake_up': {
       updated.isSleeping = false;
-      updated.stats.energy = clamp(updated.stats.energy + 30, STAT_MIN, STAT_MAX);
-      creatureResponse = '★ yawn ★ Good morning! Did you dream about me?';
+      // Check minimum sleep time — 5 minutes required for energy recovery
+      const tuckedAt = state.tuckedInAt ? new Date(state.tuckedInAt).getTime() : 0;
+      const sleptMs = Date.now() - tuckedAt;
+      const MIN_SLEEP_MS = 5 * 60 * 1000; // 5 minutes
+      if (sleptMs >= MIN_SLEEP_MS) {
+        updated.stats.energy = clamp(updated.stats.energy + 30, STAT_MIN, STAT_MAX);
+        updated.tuckedInAt = null;
+        creatureResponse = '★ yawn ★ Good morning! Did you dream about me?';
+      } else {
+        // Woken too soon — no energy, just grumpy
+        updated.stats.happiness = clamp(updated.stats.happiness - 5, STAT_MIN, STAT_MAX);
+        updated.tuckedInAt = null;
+        creatureResponse = '★ grumble ★ Hey... I was still sleeping...';
+      }
       moodChange = 'content';
       break;
     }

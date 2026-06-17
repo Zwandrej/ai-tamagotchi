@@ -100,68 +100,88 @@ export function generateTemplateResponse(
   const mood = creature.personality.mood;
   const name = creature.name;
   const stats = creature.stats;
+  const stage = creature.stage;
   const traits = creature.dna.phenotype.expressedTraits;
   const species = creature.dna.genotype.species;
 
   // ── State-driven urgent responses (take priority) ──
-  if (stats.hunger > 90) return `*stomach growls loudly* ${name} needs food! ;;`;
-  if (stats.energy < 10) return `*barely keeping eyes open* so... tired...`;
-  if (stats.hygiene < 15) return `*sniff sniff* um... ${name} could use a bath...`;
-  if (mood === 'sick') return `*weak chirp* ${name} doesn't feel good... need help...`;
+  if (stats.hunger > 90) {
+    if (stage === 'egg' || stage === 'baby') return `food... please...`;
+    if (stage === 'child' || stage === 'teen') return `I'm really hungry... can I eat?`;
+    return `I could really use some food right now.`;
+  }
+  if (stats.energy < 10) {
+    if (stage === 'egg' || stage === 'baby') return `so... sleepy...`;
+    if (stage === 'child' || stage === 'teen') return `Can I sleep now? So tired...`;
+    return `I can barely keep my eyes open. Need rest.`;
+  }
+  if (stats.hygiene < 15) {
+    if (stage === 'egg' || stage === 'baby') return `icky...`;
+    if (stage === 'child' || stage === 'teen') return `I don't feel clean...`;
+    return `I could really use a bath.`;
+  }
+  if (mood === 'sick') {
+    if (stage === 'egg' || stage === 'baby') return `owie...`;
+    if (stage === 'child' || stage === 'teen') return `don't feel good...`;
+    return `I'm not feeling well.`;
+  }
 
-  // ── Mood-prefixed responses ──
-  const moodPrefix: Record<string, string[]> = {
-    ecstatic: ['*bouncing excitedly*', '*sparkling with joy*', '*radiating happiness*'],
-    happy: ['*chirps cheerfully*', '*tail wagging*', '*bright-eyed*'],
-    content: ['*nods peacefully*', '*gentle purr*', '*cozy sigh*'],
-    bored: ['*yawns*', '*stares at ceiling*', '*fidgets*'],
-    hungry: ['*stomach rumbles*', '*looks at food bowl*', '*pawing at you*'],
-    sad: ['*droopy ears*', '*quiet sniffle*', '*looking down*'],
-    angry: ['*steam from ears*', '*grumpy glare*', '*crosses arms*'],
+  // ── Mood-prefixed responses (no asterisks, natural language) ──
+  const moodText: Record<string, string[]> = {
+    ecstatic: ['So happy!', 'Best day!', 'Everything is amazing!'],
+    happy: ['Nice!', 'Feeling good!', 'What a lovely moment.'],
+    content: ['All good here.', 'Just vibing.', 'Peaceful day.'],
+    bored: ['Hmm.', 'Not much happening.', 'What should we do?'],
+    hungry: ['Getting hungry...', 'Snack time maybe?', 'Tummy is rumbling.'],
+    sad: ['Feeling down...', 'A bit gloomy.', 'Could use a hug.'],
+    angry: ['Not happy.', 'That was mean.', 'I need space.'],
   };
-  const prefix = (moodPrefix[mood] || ['*tilts head*'])[Math.floor(Math.random() * 3)]!;
+  const prefix = (moodText[mood] || ['Hello?'])[Math.floor(Math.random() * 3)] || 'Hmm.';
 
-  // ── Context-aware responses based on user message ──
-  if (lower.includes('hello') || lower.includes('hi') || lower.includes('hey'))
-    return `${prefix} Hi! I'm ${name} the ${species} ☆`;
+  // ── Context-aware responses (no percentages, stage-aware) ──
+  const isBaby = stage === 'egg' || stage === 'baby';
+  const isYoung = stage === 'child' || stage === 'teen';
 
-  if (lower.includes('how are you') || lower.includes('how do you feel'))
-    return `${prefix} I feel ${mood}. My hunger is ${stats.hunger}% and energy ${stats.energy}%.`;
+  if (lower.includes('hello') || lower.includes('hi') || lower.includes('hey')) {
+    return isBaby ? `${prefix} Hi hi!` : isYoung ? `${prefix} Hey, I'm ${name}!` : `${prefix} Hello! I'm ${name}, a ${species}.`;
+  }
 
-  if (lower.includes('love') || lower.includes('like you') || lower.includes('cute'))
-    return `${prefix} Aww! *blushes* That makes me so happy! ♡`;
+  if (lower.includes('how are you') || lower.includes('how do you feel')) {
+    return isBaby ? `${prefix} Me feel ${mood}!` : isYoung ? `${prefix} I feel ${mood} today.` : `${prefix} I'm ${mood}. Thanks for asking.`;
+  }
 
-  if (lower.includes('food') || lower.includes('hungry') || lower.includes('eat'))
-    return stats.hunger > 50
-      ? `${prefix} Yes please! I'm at ${stats.hunger}% hunger!`
-      : `${prefix} I'm okay for now — ${stats.hunger}% hunger.`;
+  if (lower.includes('love') || lower.includes('like you') || lower.includes('cute')) {
+    return isBaby ? `You nice! Happy!` : isYoung ? `${prefix} That makes me smile!` : `${prefix} That means a lot.`;
+  }
 
-  if (lower.includes('play') || lower.includes('fun') || lower.includes('game'))
-    return traits.playfulness > 0.6
-      ? `${prefix} YES! Play time! Let's go! ☆`
-      : `${prefix} Sure, we can play if you want.`;
+  if (lower.includes('food') || lower.includes('hungry') || lower.includes('eat')) {
+    if (isBaby) return stats.hunger > 50 ? `Me hungry!` : `Tummy ok.`;
+    if (isYoung) return stats.hunger > 50 ? `Yeah, I could eat!` : `I'm okay for now.`;
+    return stats.hunger > 50 ? `Actually, I am getting hungry.` : `I'm fine, but thanks!`;
+  }
 
-  if (lower.includes('sleep') || lower.includes('tired') || lower.includes('bed'))
-    return `${prefix} ${stats.energy < 30 ? 'Zzz... yes please...' : 'I could rest... or stay up with you!'}`;
+  if (lower.includes('play') || lower.includes('fun') || lower.includes('game')) {
+    return isBaby ? `Play play play!` : isYoung ? `Yes, let's play!` : `Let's do something fun!`;
+  }
 
-  if (lower.includes('story') || lower.includes('tell me'))
-    return `${prefix} Once upon a time, a little ${species} dreamed of stars and adventure... ✦`;
+  if (lower.includes('sleep') || lower.includes('tired') || lower.includes('bed')) {
+    if (stats.energy < 30) {
+      return isBaby ? `night night...` : isYoung ? `Yeah... sleepy...` : `I think I need to rest.`;
+    }
+    return isBaby ? `No sleepy!` : isYoung ? `Maybe later?` : `I'm still awake.`;
+  }
 
-  if (lower.includes('why') || lower.includes('what'))
-    return `${prefix} That's a deep question! *ponders* The universe is full of mysteries...`;
-
-  // ── Personality-driven generic responses ──
-  const genericResponses = [
-    `${prefix} ${name} is listening intently.`,
-    `${prefix} ${name} chirps a little tune.`,
-    `${prefix} ${name} tilts its head curiously.`,
-    `${prefix} *happy wiggle* What's up?`,
-    `${prefix} ${name} draws a little star in the air... ✦`,
-    `${prefix} The world feels ${mood === 'happy' ? 'bright' : mood === 'sad' ? 'heavy' : 'interesting'} today.`,
-    `${prefix} ${name} remembers all the good times with you.`,
-  ];
-
-  return genericResponses[Math.floor(Math.random() * genericResponses.length)]!;
+  // ── Generic responses (stage-aware, no asterisks) ──
+  if (isBaby) {
+    const baby = ['Hi hi!', 'You nice!', 'Me happy!', 'What that?', 'Play?', 'Warm...', 'Love you!'];
+    return prefix + ' ' + baby[Math.floor(Math.random() * baby.length)];
+  }
+  if (isYoung) {
+    const young = [`${name} is here!`, `What's up?`, `Cool!`, `Tell me something.`, `This is fun.`, `I like you.`];
+    return prefix + ' ' + young[Math.floor(Math.random() * young.length)];
+  }
+  const adult = [`${name} is listening.`, `What's on your mind?`, `Tell me more.`, `I wonder what's next.`, `Being a ${species} is interesting.`, `Sometimes quiet is nice.`];
+  return prefix + ' ' + adult[Math.floor(Math.random() * adult.length)];;
 }
 
 // ──────────────────────────────────────────────────────────────
