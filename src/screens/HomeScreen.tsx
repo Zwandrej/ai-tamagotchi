@@ -73,6 +73,17 @@ export function HomeScreen() {
         >
           <Text style={styles.resetText}>$ hatch --new</Text>
         </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.resetBtn, { marginTop: 8, borderColor: Term.textDim }]}
+          onPress={() => {
+            const { buildDNAExport } = require('../services/creature/dna');
+            const exp = buildDNAExport(creature);
+            const { Share } = require('react-native');
+            Share.share({ message: exp.json, title: exp.filename });
+          }}
+        >
+          <Text style={[styles.resetText, { color: Term.textDim }]}>[export dna]</Text>
+        </TouchableOpacity>
       </View>
     );
   }

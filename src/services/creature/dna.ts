@@ -15,6 +15,7 @@ import type {
   AppearanceDNA,
   MemoryGene,
   CareSummary,
+  CreatureState,
 } from '../../types/creature';
 import type { Species, EvolutionStage, EvolutionBranch } from '../../constants/creatures';
 import { deepClone } from '../../utils/clone';
@@ -386,10 +387,22 @@ export function updateCareSummary(
 // DNA Export / Import
 // ──────────────────────────────────────────────────────────────
 
-export function exportDNA(dna: CreatureDNA): string {
+export function exportDNAString(dna: CreatureDNA): string {
   const copy = deepClone(dna);
   copy.id = computeDNAId(copy);
   return JSON.stringify(copy, null, 2);
+}
+
+/**
+ * Export creature DNA + life summary as a JSON file.
+ * Also saves to Documents so the file persists beyond the share sheet.
+ */
+export function buildDNAExport(creature: CreatureState): { json: string; filename: string; summary: string } {
+  const json = exportDNAString(creature.dna);
+  const filename = `dna_${creature.name}_${creature.dna.id.slice(-8)}.json`;
+  const lifeStage = creature.stage === 'egg' ? 'barely began' : creature.stage === 'baby' ? 'was just learning' : creature.stage === 'child' ? 'grew curious' : creature.stage === 'teen' ? 'found their voice' : 'lived fully';
+  const summary = `${creature.name} the ${creature.dna.genotype.species} — ${lifeStage} across ${creature.totalInteractions} interactions. Mood at passing: ${creature.personality.mood}.`;
+  return { json, filename, summary };
 }
 
 export function importDNA(json: string): CreatureDNA {
