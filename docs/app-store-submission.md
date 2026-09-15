@@ -248,10 +248,39 @@ cd ios && pod install && cd ..
 npm test          # jest suite must be green
 npx tsc --noEmit  # typecheck
 
-# 4. open the workspace, sign the app target with your team, then
+# 4. pre-flight: an UNSIGNED device archive. This needs no team or developer
+#    account and proves the real App Store compile path (arm64 device slice,
+#    llama.rn device slice, Hermes bytecode, asset catalog, privacy manifests)
+#    before anything can block on signing.
+rm -rf /tmp/ai-dd-dev /tmp/AITamagotchi.xcarchive
+xcodebuild -workspace ios/AITamagotchi.xcworkspace -scheme AITamagotchi \
+  -configuration Release -sdk iphoneos -destination 'generic/platform=iOS' \
+  -derivedDataPath /tmp/ai-dd-dev \
+  CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
+  archive -archivePath /tmp/AITamagotchi.xcarchive
+
+# 5. open the workspace, sign the app target with your team, then
 #    Product → Archive → Distribute App → App Store Connect → Upload
 open ios/AITamagotchi.xcworkspace
 ```
+
+### Notes for this project (Xcode 26/27 era)
+
+- **The UIScene lifecycle is mandatory.** Apps built with the iOS 26+ SDK are
+  refused at launch without it: *"Application failed to launch: UIScene life
+  cycle is required for apps built with this SDK."* React Native 0.82's
+  template is still window-based and ships no `SceneDelegate`, so this project
+  implements one (`SceneDelegate` in `ios/AITamagotchi/AppDelegate.swift`,
+  declared through `UIApplicationSceneManifest`). If you regenerate the iOS
+  project from a template, you must re-apply this.
+- **Xcode 27 has no `Simulator.app`.** It was replaced by
+  `/Applications/Xcode.app/Contents/Applications/DeviceHub.app`
+  (`com.apple.dt.Devices`), and `open -a Simulator` fails. Drive simulators
+  headlessly with `xcrun simctl` (`boot`, `install`, `launch`,
+  `io booted screenshot`) — that works regardless.
+- Do not commit `ios/.xcode.env.local`. It pins `NODE_BINARY` to one machine's
+  path and breaks the `[Hermes]` and `Bundle React Native code and images`
+  script phases on any other machine.
 
 Then: App Store Connect → your app → TestFlight (wait for processing) →
 submit for review with the metadata above. Use TestFlight on your own device
