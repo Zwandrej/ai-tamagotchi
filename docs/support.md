@@ -25,19 +25,19 @@ care, mood and stats from the very first launch, with no download at all.
 If you want richer, free-form conversation, you can download a language model:
 
 1. Start a new creature (or open the model picker in the creation flow).
-2. Choose a model from the "select brain" list — the smaller ones (SmolLM2
-   135M/360M, ~90–270 MB) are the safest bet.
+2. Choose a model from the "select brain" list — TinyLlama 1.1B is the
+   smallest download and the safest bet on an older phone.
 3. Wait for the download to finish, then start chatting.
 
 ### How big are the models, and which should I pick?
 
 | Model | Download size | Best for |
 |---|---|---|
-| SmolLM2 135M | ~90 MB | Older phones, fastest replies |
-| SmolLM2 360M (default) | ~240 MB | The sweet spot for most people |
-| Qwen2.5 0.5B | ~350 MB | Slightly richer conversations |
-| TinyLlama 1.1B | ~640 MB | More personality, needs ~1.5 GB free RAM |
-| Gemma 2 2B | ~1.6 GB | Best quality, recent flagship phones only |
+| Built-in engine (default) | no download | Instant replies, works fully offline |
+| TinyLlama 1.1B | ~0.6 GB | Smallest download, happy on older phones |
+| Llama 3.2 1B | ~0.7 GB | Fast, good for quick responses |
+| Gemma 2 2B | ~1.4 GB | Richer conversation, recent phones |
+| Phi-2 2.7B | ~1.6 GB | The smartest of the set, wants the most free RAM |
 
 The bigger the model, the slower and more memory-hungry it gets. If replies
 feel sluggish on your device, drop down a size.
