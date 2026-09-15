@@ -177,16 +177,32 @@ describe('Notification Engine', () => {
   });
 
   it('respects cooldowns', () => {
+    // This test depended on the wall clock and on randomly generated DNA: the
+    // low-urgency rules include good_morning (06:00-10:00), good_night
+    // (21:00-02:00) and mischief_idea (mood 'mischief' or playfulness > 0.8),
+    // and any of those firing on the second call fails the assertion below.
+    // It passed in the morning and failed after 21:00. Pin the clock and
+    // neutralise those conditions so the cooldown is what is under test.
+    jest.useFakeTimers();
+    jest.setSystemTime(new Date('2026-01-15T13:00:00Z'));
+    resetCooldowns();
+
     const creature = createCreature('stardrop', 'Pixel');
     creature.stats.hunger = 90;
+    creature.personality.mood = 'hungry';
+    creature.personality.expressedTraits.playfulness = 0.5;
 
-    // First call should fire
+    // First call should fire — critical hunger is the top-priority match
     const first = checkNotifications(creature);
     expect(first).toBeTruthy();
+    expect(first!.urgency).toBe('high');
 
-    // Second call immediately should not fire (cooldown)
+    // Second call immediately should not fire (high is now on cooldown, and
+    // no medium or low rule matches this creature)
     const second = checkNotifications(creature);
     expect(second).toBeNull();
+
+    jest.useRealTimers();
   });
 });
 
@@ -247,7 +263,7 @@ describe('Model Catalog', () => {
   it('finds model by ID', () => {
     const model = getModelById('smollm2-135m-q4km');
     expect(model).toBeTruthy();
-    expect(model!.sizeMb).toBe(90);
+    expect(model!.sizeMb).toBe(101); // real artifact size in MiB
   });
 
   it('filters by RAM budget', () => {
