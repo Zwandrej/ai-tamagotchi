@@ -48,6 +48,16 @@ export function getModelPath(modelId: string): string | undefined {
   return _downloadedModels.get(modelId);
 }
 
+/** Models present on disk, after hydrateDownloadedModels() has run. */
+export function getDownloadedModelIds(): string[] {
+  return [..._downloadedModels.keys()];
+}
+
+/** The model actually answering right now, or null for the built-in engine. */
+export function getLoadedModelId(): string | null {
+  return _context ? _activeModelId : null;
+}
+
 /** Where a model's file lives. The id is the filename, so this needs no state. */
 function modelFilePath(modelId: string): string {
   return `${RNFS.DocumentDirectoryPath}/models/${modelId}.gguf`;
@@ -103,11 +113,6 @@ export async function restoreLoadedModel(modelId: string): Promise<boolean> {
   }
 }
 
-/** True when an LLM is actually loaded and can answer. */
-export function isModelReady(): boolean {
-  return _context !== null;
-}
-
 // ──────────────────────────────────────────────────────────────
 // Engine-change notifications
 // ──────────────────────────────────────────────────────────────
@@ -117,18 +122,20 @@ export function isModelReady(): boolean {
 // which is how a silently degraded engine went unnoticed. Screens subscribe so
 // they can say which one is answering.
 
-type ModelReadyListener = (ready: boolean) => void;
-const _modelReadyListeners = new Set<ModelReadyListener>();
+type EngineListener = (modelId: string | null) => void;
+const _engineListeners = new Set<EngineListener>();
 
-export function onModelReadyChange(listener: ModelReadyListener): () => void {
-  _modelReadyListeners.add(listener);
+/** Notified with the model that is answering, or null for the built-in engine. */
+export function onEngineChange(listener: EngineListener): () => void {
+  _engineListeners.add(listener);
   return () => {
-    _modelReadyListeners.delete(listener);
+    _engineListeners.delete(listener);
   };
 }
 
-function _notifyModelReady(): void {
-  for (const listener of _modelReadyListeners) listener(_context !== null);
+function _notifyEngine(): void {
+  const loaded = getLoadedModelId();
+  for (const listener of _engineListeners) listener(loaded);
 }
 
 /**
@@ -276,7 +283,7 @@ export async function loadModel(
     (progress: number) => onProgress?.(Math.round(progress * 100)),
   );
   _activeModelId = modelId;
-  _notifyModelReady();
+  _notifyEngine();
   onProgress?.(100);
 }
 
@@ -345,10 +352,12 @@ export async function generateResponse(
         '<|assistant|>',
         '<|system|>',
         '</s>',
-        '\nOwner:',
-        '\nOWNER:',
-        '\nUSER:',
-        '\nASSISTANT:',
+        'Owner:',
+        'OWNER:',
+        'USER:',
+        'ASSISTANT:',
+        '<|eot_id|>',
+        '<|start_header_id|>',
       ],
     });
     _inferenceLock = false;
@@ -390,6 +399,15 @@ function cleanResponse(text: string, creatureName?: string): string {
   if (creatureName) labels.push(creatureName.toLowerCase());
   const labelPattern = new RegExp(`^(${labels.map((l) => l.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})\\s*[:\\-]\\s+`, 'i');
   cleaned = cleaned.replace(labelPattern, '').trim();
+
+  // The prompt asks for feelings in words rather than stage directions, and
+  // models emit them anyway ("Oooh, I feel hurt. *whine*"). Asking is not
+  // enough; strip them so they never reach the user.
+  cleaned = cleaned
+    .replace(/\*[^*]{1,60}\*/g, '')
+    .replace(/\s{2,}/g, ' ')
+    .replace(/\s+([.!?,])/g, '$1')
+    .trim();
 
   // If response looks truncated (no sentence-ending punctuation near the end),
   // trim back to the last complete sentence boundary

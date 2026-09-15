@@ -14,7 +14,7 @@ import { useCreatureStore } from '../store/useCreatureStore';
 import { createCreature } from '../services/creature/creatureEngine';
 import { renderCreature } from '../services/creature/asciiRenderer';
 import { MODELS, type ModelInfo } from '../services/creature/ModelManager';
-import { isModelDownloaded, downloadModel, loadModel, getModelPath } from '../services/creature/AIService';
+import { isModelDownloaded, downloadModel, loadModel, getModelPath, getDownloadedModelIds } from '../services/creature/AIService';
 import { importDNA, buildDNAExport } from '../services/creature/dna';
 import DocumentPicker from 'react-native-document-picker';
 import { Term } from '../theme';
@@ -29,7 +29,15 @@ const OPTIONS = [
 export function CreateCreatureScreen() {
   const [selected, setSelected] = useState<Species | null>(null);
   const [name, setName] = useState('');
-  const [modelId, setModelId] = useState<string>(MODELS[0]!.id);
+  // Defaulting to MODELS[0] meant every new creature silently used the
+  // built-in template engine, even for a user who had already downloaded one.
+  // Reuse what they chose last, or the model already on disk.
+  const [modelId, setModelId] = useState<string>(() => {
+    const previous = useCreatureStore.getState().modelId;
+    if (previous && previous !== 'apple-ondevice') return previous;
+    const downloaded = getDownloadedModelIds();
+    return downloaded.length === 1 ? downloaded[0]! : MODELS[0]!.id;
+  });
   const [downloadPct, setDownloadPct] = useState<Record<string, number>>({});
   const [downloading, setDownloading] = useState<string | null>(null);
   const [verifying, setVerifying] = useState<string | null>(null);

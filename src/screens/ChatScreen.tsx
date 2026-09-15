@@ -11,7 +11,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useCreatureStore } from '../store/useCreatureStore';
 import { CreatureCard } from '../components/creature/CreatureCard';
 import { createConversation, addMessage, type ConversationState } from '../services/conversation/conversationManager';
-import { generateResponse, isModelReady, onModelReadyChange } from '../services/creature/AIService';
+import { generateResponse, getLoadedModelId, onEngineChange } from '../services/creature/AIService';
 import { Term } from '../theme';
 import type { ConversationMessage } from '../types/conversation';
 import type { CreatureState } from '../types/creature';
@@ -24,9 +24,9 @@ export function ChatScreen() {
   const [inputText, setInputText] = useState('');
   const [conv, setConv] = useState<ConversationState>(createConversation);
   const [happinessDelta, setHappinessDelta] = useState<number | null>(null);
-  const [modelReady, setModelReady] = useState(isModelReady());
+  const [loadedModel, setLoadedModel] = useState<string | null>(getLoadedModelId());
 
-  useEffect(() => onModelReadyChange(setModelReady), []);
+  useEffect(() => onEngineChange(setLoadedModel), []);
   const flatListRef = useRef<FlatList<any>>(null);
 
   const handleSend = useCallback(async () => {
@@ -98,11 +98,11 @@ export function ChatScreen() {
               or if loading failed — and those replies look plausible enough
               that a degraded engine can go unnoticed for a whole session.
             */}
-            {modelId && modelId !== 'apple-ondevice' && (
-              <Text style={styles.engineStatus}>
-                # {modelReady ? `engine: ${modelId}` : `loading ${modelId}…`}
-              </Text>
-            )}
+            {loadedModel ? (
+              <Text style={styles.engineStatus}># engine: {loadedModel}</Text>
+            ) : modelId && modelId !== 'apple-ondevice' ? (
+              <Text style={styles.engineStatus}># loading {modelId}…</Text>
+            ) : null}
             {happinessDelta !== null && (
               <Text style={[styles.hapDelta, { color: happinessDelta >= 0 ? Term.green : Term.red }]}>
                 [{happinessDelta >= 0 ? '+' : ''}{happinessDelta}] happiness

@@ -289,6 +289,7 @@ export function buildSystemPrompt(creature: CreatureState): string {
           ...memoryLines,
           "Your owner's questions are usually about these. If they ask how you feel",
           'or what you remember, bring one of them up.',
+          'Never reply that you do not remember — you do.',
           '',
         ]
       : []),
@@ -300,15 +301,18 @@ export function buildSystemPrompt(creature: CreatureState): string {
     '- Feelings through words, not *asterisk actions*.',
     '- Refuse hateful, sexual, violent or illegal requests in character, then change the subject.',
     '',
-    'EXAMPLE',
+    // Deliberately NOT a dialogue block. Written as an example exchange, the
+    // model reproduced the exchange — 'Owner: do you remember when I scolded
+    // you?' and all — instead of answering. As a phrasing hint inside the rules
+    // it guides the same way without giving it something to copy.
     ...(hasHurtMemory
       ? [
-          'Owner: do you remember when I scolded you?',
-          `${creature.name}: You were cross with me... it still stings.`,
+          '- If asked what happened or what you remember, say it plainly and briefly,',
+          '  the way you might say "you were cross with me... it still stings."',
         ]
       : [
-          'Owner: how are you feeling?',
-          `${creature.name}: Warm and sparkly! I like it when you're here. \u2606`,
+          '- If asked how you feel, say it plainly and briefly, the way you might',
+          '  say "warm and sparkly! I like it when you are here."',
         ]),
   ].join('\n');
 }
