@@ -48,6 +48,89 @@ export function getModelPath(modelId: string): string | undefined {
   return _downloadedModels.get(modelId);
 }
 
+/** Where a model's file lives. The id is the filename, so this needs no state. */
+function modelFilePath(modelId: string): string {
+  return `${RNFS.DocumentDirectoryPath}/models/${modelId}.gguf`;
+}
+
+/**
+ * Populate the downloaded-model map from the filesystem.
+ *
+ * The map is in-memory, so after an app restart it was empty: the picker showed
+ * a previously downloaded model as though it had never been fetched, and the
+ * creature's model could not be found to load. The files are the truth; ask
+ * them instead of a variable.
+ */
+export async function hydrateDownloadedModels(): Promise<string[]> {
+  const found: string[] = [];
+  for (const model of MODELS) {
+    if (!model.url) continue;
+    const path = modelFilePath(model.id);
+    try {
+      if (await RNFS.exists(path)) {
+        _downloadedModels.set(model.id, path);
+        found.push(model.id);
+      }
+    } catch {
+      // An unreadable path is simply not a model we can use.
+    }
+  }
+  return found;
+}
+
+/**
+ * Reload the model a creature was created with, after an app restart.
+ *
+ * Without this the chat silently fell back to the built-in template engine on
+ * every launch — the model was only ever loaded inside the create flow, so a
+ * user who chose a 0.7 GB model got canned one-liners from then on, with no
+ * indication anything was wrong.
+ */
+export async function restoreLoadedModel(modelId: string): Promise<boolean> {
+  if (!modelId || modelId === 'apple-ondevice') return false;
+  if (_context) return true;
+
+  const path = modelFilePath(modelId);
+  try {
+    if (!(await RNFS.exists(path))) return false;
+    _downloadedModels.set(modelId, path);
+    await loadModel(path, modelId);
+    return true;
+  } catch (err) {
+    // Not fatal: the creature still talks, just from the template engine.
+    console.warn('[AIService] could not restore the saved model:', err);
+    return false;
+  }
+}
+
+/** True when an LLM is actually loaded and can answer. */
+export function isModelReady(): boolean {
+  return _context !== null;
+}
+
+// ──────────────────────────────────────────────────────────────
+// Engine-change notifications
+// ──────────────────────────────────────────────────────────────
+//
+// Chat replies come from the LLM when one is loaded and from the built-in
+// template engine when it is not, and the two are indistinguishable to a user —
+// which is how a silently degraded engine went unnoticed. Screens subscribe so
+// they can say which one is answering.
+
+type ModelReadyListener = (ready: boolean) => void;
+const _modelReadyListeners = new Set<ModelReadyListener>();
+
+export function onModelReadyChange(listener: ModelReadyListener): () => void {
+  _modelReadyListeners.add(listener);
+  return () => {
+    _modelReadyListeners.delete(listener);
+  };
+}
+
+function _notifyModelReady(): void {
+  for (const listener of _modelReadyListeners) listener(_context !== null);
+}
+
 /**
  * Download a GGUF model from HuggingFace.
  * Saves to app's document directory. Reports progress 0-100.
@@ -68,8 +151,7 @@ export async function downloadModel(
 
   const dir = `${RNFS.DocumentDirectoryPath}/models`;
   await RNFS.mkdir(dir);
-  const filename = `${modelId}.gguf`;
-  const destPath = `${dir}/${filename}`;
+  const destPath = modelFilePath(modelId);
 
   // A file that already exists is NOT assumed good — it is verified below,
   // because an interrupted download also leaves a file behind.
@@ -194,6 +276,7 @@ export async function loadModel(
     (progress: number) => onProgress?.(Math.round(progress * 100)),
   );
   _activeModelId = modelId;
+  _notifyModelReady();
   onProgress?.(100);
 }
 

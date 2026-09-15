@@ -2,7 +2,7 @@
  * ChatScreen — Terminal-style conversation log.
  */
 
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import {
   View, Text, TextInput, FlatList, TouchableOpacity,
   KeyboardAvoidingView, Platform, StyleSheet, Alert,
@@ -11,7 +11,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useCreatureStore } from '../store/useCreatureStore';
 import { CreatureCard } from '../components/creature/CreatureCard';
 import { createConversation, addMessage, type ConversationState } from '../services/conversation/conversationManager';
-import { generateResponse } from '../services/creature/AIService';
+import { generateResponse, isModelReady, onModelReadyChange } from '../services/creature/AIService';
 import { Term } from '../theme';
 import type { ConversationMessage } from '../types/conversation';
 import type { CreatureState } from '../types/creature';
@@ -19,10 +19,14 @@ import type { CreatureState } from '../types/creature';
 export function ChatScreen() {
   const creature = useCreatureStore((s) => s.creature);
   const chat = useCreatureStore((s) => s.chat);
+  const modelId = useCreatureStore((s) => s.modelId);
   const insets = useSafeAreaInsets();
   const [inputText, setInputText] = useState('');
   const [conv, setConv] = useState<ConversationState>(createConversation);
   const [happinessDelta, setHappinessDelta] = useState<number | null>(null);
+  const [modelReady, setModelReady] = useState(isModelReady());
+
+  useEffect(() => onModelReadyChange(setModelReady), []);
   const flatListRef = useRef<FlatList<any>>(null);
 
   const handleSend = useCallback(async () => {
@@ -88,6 +92,17 @@ export function ChatScreen() {
         ListHeaderComponent={
           <View style={styles.header}>
             <CreatureCard creature={creature} compact />
+            {/*
+              Say which engine is answering. The chat falls back to built-in
+              template replies whenever no model is resident — after a restart,
+              or if loading failed — and those replies look plausible enough
+              that a degraded engine can go unnoticed for a whole session.
+            */}
+            {modelId && modelId !== 'apple-ondevice' && (
+              <Text style={styles.engineStatus}>
+                # {modelReady ? `engine: ${modelId}` : `loading ${modelId}…`}
+              </Text>
+            )}
             {happinessDelta !== null && (
               <Text style={[styles.hapDelta, { color: happinessDelta >= 0 ? Term.green : Term.red }]}>
                 [{happinessDelta >= 0 ? '+' : ''}{happinessDelta}] happiness
@@ -155,5 +170,11 @@ const styles = StyleSheet.create({
   empty: { flex: 1, backgroundColor: Term.bg, alignItems: 'center', justifyContent: 'center', padding: 40 },
   prompt: { color: Term.textDim, fontFamily: Term.font, fontSize: Term.fontSizeXs, marginBottom: 4 },
   error: { color: Term.red, fontFamily: Term.font, fontSize: Term.fontSizeLg },
+  engineStatus: {
+    fontFamily: Term.font,
+    fontSize: Term.fontSizeSm,
+    color: Term.textDim,
+    marginTop: 4,
+  },
   hapDelta: { fontFamily: Term.font, fontSize: Term.fontSizeXs, textAlign: 'center', paddingBottom: 4 },
 });
