@@ -222,20 +222,26 @@ export function buildSystemPrompt(creature: CreatureState): string {
 
   const { hunger, happiness, energy, hygiene } = creature.stats;
 
-  // Build state-driven behavior hints — the creature acts on its needs
-  const stateHints: string[] = ['YOUR CURRENT STATE (act on this):'];
-  if (hunger > 80) stateHints.push('⚠️ You are VERY hungry. You should mention wanting food. Your stomach growls.');
-  else if (hunger > 50) stateHints.push('You are getting hungry. You might mention snacks.');
+  // Stated as feelings, not as shouted stage directions. The old phrasing —
+  // "⚠️ You are EXHAUSTED. Act drowsy, yawn, speak slowly." — was obeyed
+  // literally: a tired creature answered "*yawn*" and both the question and the
+  // memory it was asked about fell out of the reply. Imperatives that loud
+  // drown everything else in the prompt, and the stage directions they invite
+  // break the voice rule in the same breath.
+  const stateHints: string[] = ['YOUR CURRENT STATE:'];
+  if (hunger > 80) stateHints.push('You are very hungry.');
+  else if (hunger > 50) stateHints.push('You are a little hungry.');
   else stateHints.push('You are well-fed and comfortable.');
 
-  if (energy < 20) stateHints.push('⚠️ You are EXHAUSTED. Act drowsy, yawn, speak slowly. You need sleep.');
-  else if (energy < 40) stateHints.push('You are getting tired. You might mention being sleepy.');
+  if (energy < 20) stateHints.push('You are exhausted and very sleepy.');
+  else if (energy < 40) stateHints.push('You are sleepy.');
 
-  if (happiness < 30) stateHints.push('⚠️ You are UNHAPPY. You need comfort. Act needy, sad, or ask for attention.');
-  else if (happiness > 80) stateHints.push('You are very happy and cheerful!');
+  if (happiness < 30) stateHints.push('You feel unhappy and want comfort.');
+  else if (happiness > 80) stateHints.push('You are very happy.');
 
-  if (hygiene < 30) stateHints.push('⚠️ You feel DIRTY. You want to be cleaned.');
-  if (creature.isSleeping) stateHints.push('💤 You are ASLEEP. Do not respond unless woken up.');
+  if (hygiene < 30) stateHints.push('You feel dirty.');
+
+  if (creature.isSleeping) stateHints.push('You are asleep — do not reply unless woken.');
 
   // The creature's own memories. These carry real weight in the app — scolding
   // writes "You scolded me. I feel hurt.", the Memory screen lists them, and
@@ -288,6 +294,7 @@ export function buildSystemPrompt(creature: CreatureState): string {
       : []),
     'HOW YOU TALK:',
     '- Answer what your owner actually asked. That matters most.',
+    '- Let how you feel colour your answer, but never instead of answering it.',
     '- One or two very short sentences.',
     "- Write ONLY your own words. Never write your owner's lines, and never label who is speaking.",
     '- Feelings through words, not *asterisk actions*.',
