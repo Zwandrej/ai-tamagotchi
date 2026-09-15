@@ -1,5 +1,5 @@
 diff --git a/node_modules/react-native-fs/RNFSManager.m b/node_modules/react-native-fs/RNFSManager.m
-index 5ddd941..7bca62a 100755
+index 5ddd941..f1a7c21 100755
 --- a/node_modules/react-native-fs/RNFSManager.m
 +++ b/node_modules/react-native-fs/RNFSManager.m
 @@ -294,8 +294,8 @@ + (BOOL)requiresMainQueueSetup
@@ -13,3 +13,52 @@ index 5ddd941..7bca62a 100755
                    resolver:(RCTPromiseResolveBlock)resolve
                    rejecter:(RCTPromiseRejectBlock)reject)
  {
+@@ -361,7 +361,10 @@ + (BOOL)requiresMainQueueSetup
+     return reject(@"EISDIR", @"EISDIR: illegal operation on a directory, read", nil);
+   }
+ 
+-  NSData *content = [[NSFileManager defaultManager] contentsAtPath:filepath];
++  // Only the legacy (non-streaming) algorithms need the file in memory.
++  NSData *content = [algorithm isEqualToString:@"sha256"]
++    ? nil
++    : [[NSFileManager defaultManager] contentsAtPath:filepath];
+ 
+   NSArray *keys = [NSArray arrayWithObjects:@"md5", @"sha1", @"sha224", @"sha256", @"sha384", @"sha512", nil];
+ 
+@@ -382,9 +385,35 @@ + (BOOL)requiresMainQueueSetup
+     return reject(@"Error", [NSString stringWithFormat:@"Invalid hash algorithm '%@'", algorithm], nil);
+   }
+ 
++  if (![algorithm isEqualToString:@"sha256"] && content == nil) {
++    return reject(@"EISDIR", @"EISDIR: Could not open file for reading", nil);
++  }
++
+   unsigned char buffer[digestLength];
+ 
+-  if ([algorithm isEqualToString:@"md5"]) {
++  if ([algorithm isEqualToString:@"sha256"]) {
++    // Stream the file so the digest of a multi-gigabyte model never requires
++    // an equivalent-sized allocation. Reading it into a single NSData meant a
++    // ~1.7 GB model either failed to allocate (and hashed an empty buffer,
++    // reporting a false mismatch) or pushed the app to the jetsam limit.
++    CC_SHA256_CTX ctx;
++    CC_SHA256_Init(&ctx);
++    NSFileHandle *handle = [NSFileHandle fileHandleForReadingAtPath:filepath];
++    if (handle == nil) {
++      return reject(@"EISDIR", @"EISDIR: Could not open file for reading", nil);
++    }
++    while (true) {
++      @autoreleasepool {
++        NSData *chunk = [handle readDataOfLength:(1024 * 1024)];
++        if (chunk.length == 0) {
++          break;
++        }
++        CC_SHA256_Update(&ctx, chunk.bytes, (CC_LONG)chunk.length);
++      }
++    }
++    [handle closeFile];
++    CC_SHA256_Final(buffer, &ctx);
++  } else if ([algorithm isEqualToString:@"md5"]) {
+     CC_MD5(content.bytes, (CC_LONG)content.length, buffer);
+   } else if ([algorithm isEqualToString:@"sha1"]) {
+     CC_SHA1(content.bytes, (CC_LONG)content.length, buffer);

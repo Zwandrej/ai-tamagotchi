@@ -151,20 +151,18 @@ async function verifyModelFile(
   model: ModelInfo,
   onProgress?: (pct: number, phase: 'download' | 'verify') => void,
 ): Promise<void> {
-  let totalBytes = 0;
-  try {
-    const stat = await RNFS.stat(path);
-    totalBytes = Number(stat.size) || 0;
-  } catch {
-    // Progress reporting only — hashing works without a known total size.
-  }
-
   await verifyFileSha256(
     path,
     model.sha256,
-    (filePath, position, length) => RNFS.read(filePath, length, position, 'base64'),
     {
-      totalBytes,
+      stat: (filePath) => RNFS.stat(filePath).then((s) => ({ size: Number(s.size) || 0 })),
+      // Native CommonCrypto digest — see patches/react-native-fs+2.20.0.patch.
+      // A JS-side hash of the same file took minutes on device.
+      digest: (filePath) => RNFS.hash(filePath, 'sha256'),
+    },
+    {
+      // Catches a truncated download in milliseconds, before hashing.
+      expectedBytes: model.sizeBytes || undefined,
       onProgress: (pct) => onProgress?.(pct, 'verify'),
     },
   );

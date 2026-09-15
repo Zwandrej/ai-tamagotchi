@@ -21,6 +21,7 @@ export interface ModelInfo {
   quant: string;     // e.g. "Q4_K_M"
   url: string;       // HuggingFace download URL
   sha256: string;    // SHA-256 of that exact upstream artifact (verified after download)
+  sizeBytes: number; // Exact upstream byte size — checked before hashing (0 = no download)
   description: string;
 }
 
@@ -30,6 +31,7 @@ export const MODELS: ModelInfo[] = [
     id: 'apple-ondevice',
     name: 'Built-in Engine',
     size: 'built-in',
+    sizeBytes: 0,
     minRAM: 'N/A',
     quant: 'N/A',
     url: '',
@@ -40,6 +42,7 @@ export const MODELS: ModelInfo[] = [
     id: 'llama-3.2-1b',
     name: 'Llama 3.2 1B',
     size: '0.7 GB',
+    sizeBytes: 807694464,
     minRAM: '2 GB',
     quant: 'Q4_K_M',
     url: 'https://huggingface.co/bartowski/Llama-3.2-1B-Instruct-GGUF/resolve/main/Llama-3.2-1B-Instruct-Q4_K_M.gguf',
@@ -50,6 +53,7 @@ export const MODELS: ModelInfo[] = [
     id: 'tinyllama-1.1b',
     name: 'TinyLlama 1.1B',
     size: '0.6 GB',
+    sizeBytes: 668788096,
     minRAM: '2 GB',
     quant: 'Q4_K_M',
     url: 'https://huggingface.co/TheBloke/TinyLlama-1.1B-Chat-v1.0-GGUF/resolve/main/tinyllama-1.1b-chat-v1.0.Q4_K_M.gguf',
@@ -60,6 +64,7 @@ export const MODELS: ModelInfo[] = [
     id: 'phi-2',
     name: 'Phi-2 2.7B',
     size: '1.6 GB',
+    sizeBytes: 1789239136,
     minRAM: '4 GB',
     quant: 'Q4_K_M',
     url: 'https://huggingface.co/TheBloke/phi-2-GGUF/resolve/main/phi-2.Q4_K_M.gguf',
@@ -70,6 +75,7 @@ export const MODELS: ModelInfo[] = [
     id: 'gemma-2-2b',
     name: 'Gemma 2 2B',
     size: '1.4 GB',
+    sizeBytes: 1708582752,
     minRAM: '4 GB',
     quant: 'Q4_K_M',
     url: 'https://huggingface.co/bartowski/gemma-2-2b-it-GGUF/resolve/main/gemma-2-2b-it-Q4_K_M.gguf',
