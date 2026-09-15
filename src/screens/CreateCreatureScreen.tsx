@@ -32,6 +32,7 @@ export function CreateCreatureScreen() {
   const [modelId, setModelId] = useState<string>(MODELS[0]!.id);
   const [downloadPct, setDownloadPct] = useState<Record<string, number>>({});
   const [downloading, setDownloading] = useState<string | null>(null);
+  const [verifying, setVerifying] = useState<string | null>(null);
   const [importedDNA, setImportedDNA] = useState<CreatureDNA | null>(null);
   const storeCreate = useCreatureStore((s) => s.create);
   const storeCreateFromDNA = useCreatureStore((s) => s.createFromDNA);
@@ -89,9 +90,13 @@ export function CreateCreatureScreen() {
     if (isModelDownloaded(id)) return;
     setDownloading(id);
     try {
-      await downloadModel(id, (pct) => setDownloadPct(prev => ({ ...prev, [id]: pct })));
+      await downloadModel(id, (pct, phase) => {
+        setDownloadPct(prev => ({ ...prev, [id]: pct }));
+        setVerifying(phase === 'verify' ? id : null);
+      });
     } catch (err: any) { Alert.alert('[err]', err.message); }
     setDownloading(null);
+    setVerifying(null);
   };
 
   const handleCreate = async () => {
@@ -172,6 +177,7 @@ export function CreateCreatureScreen() {
           const isSelected = modelId === m.id;
           const pct = downloadPct[m.id] || 0;
           const downloadingThis = downloading === m.id;
+          const verifyingThis = verifying === m.id;
           const downloaded = isModelDownloaded(m.id) || !m.url;
           return (
             <TouchableOpacity
@@ -193,7 +199,7 @@ export function CreateCreatureScreen() {
                 {downloadingThis && (
                   <View style={{ marginTop: 6 }}>
                     <Text style={styles.downloadText}>
-                      [{pct === 100 ? 'done' : '···'}] downloading… {pct}%
+                      [{pct === 100 ? 'done' : '···'}] {verifyingThis ? 'verifying…' : 'downloading…'} {pct}%
                     </Text>
                     <View style={styles.progressBar}>
                       <View style={[styles.progressFill, { width: `${pct}%` }]} />

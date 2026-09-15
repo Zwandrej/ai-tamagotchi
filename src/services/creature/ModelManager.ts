@@ -20,6 +20,7 @@ export interface ModelInfo {
   minRAM: string;    // e.g. "2 GB"
   quant: string;     // e.g. "Q4_K_M"
   url: string;       // HuggingFace download URL
+  sha256: string;    // SHA-256 of that exact upstream artifact (verified after download)
   description: string;
 }
 
@@ -27,12 +28,13 @@ export interface ModelInfo {
 export const MODELS: ModelInfo[] = [
   {
     id: 'apple-ondevice',
-    name: 'Apple On-Device',
+    name: 'Built-in Engine',
     size: 'built-in',
     minRAM: 'N/A',
     quant: 'N/A',
     url: '',
-    description: 'Uses iOS on-device ML. No download needed. Fastest, always available.',
+    sha256: '',
+    description: 'No download. Instant replies from the built-in personality engine. Always available, works fully offline.',
   },
   {
     id: 'llama-3.2-1b',
@@ -41,6 +43,7 @@ export const MODELS: ModelInfo[] = [
     minRAM: '2 GB',
     quant: 'Q4_K_M',
     url: 'https://huggingface.co/bartowski/Llama-3.2-1B-Instruct-GGUF/resolve/main/Llama-3.2-1B-Instruct-Q4_K_M.gguf',
+    sha256: '6f85a640a97cf2bf5b8e764087b1e83da0fdb51d7c9fab7d0fece9385611df83',
     description: 'Fastest. Good for quick responses on older devices.',
   },
   {
@@ -50,6 +53,7 @@ export const MODELS: ModelInfo[] = [
     minRAM: '2 GB',
     quant: 'Q4_K_M',
     url: 'https://huggingface.co/TheBloke/TinyLlama-1.1B-Chat-v1.0-GGUF/resolve/main/tinyllama-1.1b-chat-v1.0.Q4_K_M.gguf',
+    sha256: '9fecc3b3cd76bba89d504f29b616eedf7da85b96540e490ca5824d3f7d2776a0',
     description: 'Very fast. Simple but charming responses.',
   },
   {
@@ -59,6 +63,7 @@ export const MODELS: ModelInfo[] = [
     minRAM: '4 GB',
     quant: 'Q4_K_M',
     url: 'https://huggingface.co/TheBloke/phi-2-GGUF/resolve/main/phi-2.Q4_K_M.gguf',
+    sha256: '324356668fa5ba9f4135de348447bb2bbe2467eaa1b8fcfb53719de62fbd2499',
     description: 'Surprisingly smart for its size. Best quality.',
   },
   {
@@ -68,6 +73,7 @@ export const MODELS: ModelInfo[] = [
     minRAM: '4 GB',
     quant: 'Q4_K_M',
     url: 'https://huggingface.co/bartowski/gemma-2-2b-it-GGUF/resolve/main/gemma-2-2b-it-Q4_K_M.gguf',
+    sha256: 'e0aee85060f168f0f2d8473d7ea41ce2f3230c1bc1374847505ea599288a7787',
     description: 'Google\'s tiny model. Creative and playful.',
   },
 ];

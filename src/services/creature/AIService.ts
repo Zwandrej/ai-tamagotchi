@@ -10,6 +10,7 @@ import { initLlama, type LlamaContext } from 'llama.rn';
 import RNFS from 'react-native-fs';
 import type { CreatureState } from '../../types/creature';
 import { MODELS, buildLLMPrompt, type ModelInfo } from './ModelManager';
+import { verifyFileSha256 } from './integrity';
 
 // ──────────────────────────────────────────────────────────────
 // State
@@ -46,15 +47,15 @@ export function getModelPath(modelId: string): string | undefined {
  */
 export async function downloadModel(
   modelId: string,
-  onProgress?: (pct: number) => void,
+  onProgress?: (pct: number, phase: 'download' | 'verify') => void,
 ): Promise<string> {
   const model = MODELS.find((m) => m.id === modelId);
   if (!model) throw new Error(`Unknown model: ${modelId}`);
   if (!model.url) throw new Error(`${model.name} requires no download`);
 
-  // Check if already downloaded
+  // Already downloaded and verified in this session
   if (_downloadedModels.has(modelId)) {
-    onProgress?.(100);
+    onProgress?.(100, 'download');
     return _downloadedModels.get(modelId)!;
   }
 
@@ -63,31 +64,68 @@ export async function downloadModel(
   const filename = `${modelId}.gguf`;
   const destPath = `${dir}/${filename}`;
 
-  // Check if file already exists on disk
+  // A file that already exists is NOT assumed good — it is verified below,
+  // because an interrupted download also leaves a file behind.
   const exists = await RNFS.exists(destPath);
-  if (exists) {
-    _downloadedModels.set(modelId, destPath);
-    onProgress?.(100);
-    return destPath;
+  if (!exists) {
+    const { promise } = RNFS.downloadFile({
+      fromUrl: model.url,
+      toFile: destPath,
+      progress: (res) => {
+        if (res.contentLength > 0) {
+          const pct = Math.round((res.bytesWritten / res.contentLength) * 100);
+          onProgress?.(Math.min(100, pct), 'download');
+        }
+      },
+      progressDivider: 10,
+    });
+
+    const result = await promise;
+    if (result.statusCode !== 200) {
+      await RNFS.unlink(destPath).catch(() => {});
+      throw new Error(`Download failed: ${result.statusCode}`);
+    }
   }
 
-  // Download with progress
-  const { promise, jobId } = RNFS.downloadFile({
-    fromUrl: model.url,
-    toFile: destPath,
-    progress: (res) => {
-      const pct = Math.round((res.bytesWritten / res.contentLength) * 100);
-      onProgress?.(pct);
+  // Trust nothing until the digest matches the published one.
+  try {
+    await verifyModelFile(destPath, model, onProgress);
+  } catch (err) {
+    await RNFS.unlink(destPath).catch(() => {});
+    throw err;
+  }
+
+  _downloadedModels.set(modelId, destPath);
+  onProgress?.(100, 'download');
+  return destPath;
+}
+
+/**
+ * Hash a downloaded model file and compare it against the catalog digest.
+ * Throws IntegrityError on mismatch — the caller deletes the file.
+ */
+async function verifyModelFile(
+  path: string,
+  model: ModelInfo,
+  onProgress?: (pct: number, phase: 'download' | 'verify') => void,
+): Promise<void> {
+  let totalBytes = 0;
+  try {
+    const stat = await RNFS.stat(path);
+    totalBytes = Number(stat.size) || 0;
+  } catch {
+    // Progress reporting only — hashing works without a known total size.
+  }
+
+  await verifyFileSha256(
+    path,
+    model.sha256,
+    (filePath, position, length) => RNFS.read(filePath, length, position, 'base64'),
+    {
+      totalBytes,
+      onProgress: (pct) => onProgress?.(pct, 'verify'),
     },
-    progressDivider: 10,
-  });
-
-  const result = await promise;
-  if (result.statusCode === 200) {
-    _downloadedModels.set(modelId, destPath);
-    return destPath;
-  }
-  throw new Error(`Download failed: ${result.statusCode}`);
+  );
 }
 
 /**

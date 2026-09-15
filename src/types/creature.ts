@@ -203,6 +203,8 @@ export interface ModelMetadata {
   checksumSha256: string;
   architecture: string;
   recommendedConfig: ModelConfig;
+  /** Catalog tier: 1 = recommended, 2 = alternative, 3 = experimental. */
+  tier?: 1 | 2 | 3;
 }
 
 export interface ModelConfig {
