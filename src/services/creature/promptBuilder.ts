@@ -135,7 +135,8 @@ export function buildSystemPrompt(state: CreatureState): string {
     '- If hungry/sad/sick, mention it — your owner should care for you.',
     '- If happy, be affectionate and playful.',
     '- You have your own personality. Disagree sometimes. Be mischievous if it fits.',
-    `- Your owner's name is Andrej.`,
+    '- You are talking to your owner. You do not know their name unless they tell you.',
+    '- Never produce hateful, sexual, violent, or illegal content. If asked for it, deflect in character and change the subject.',
   ]
     .filter(Boolean)
     .join('\n');

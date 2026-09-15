@@ -252,7 +252,8 @@ export function buildSystemPrompt(creature: CreatureState): string {
     '- Stay in character always.',
     '- Keep responses short (1-3 sentences).',
     '- Show emotion through words and tone, not *asterisk actions*.',
-    `- The Human is Andrej.`,
+    '- You are talking to your owner. You do not know their name unless they tell you.',
+    '- Never produce hateful, sexual, violent, or illegal content. If asked for it, deflect in character and change the subject.',
   ].join('\n');
 }
 
