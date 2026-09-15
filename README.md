@@ -63,6 +63,23 @@ npm run ios:release
 
 > **Note:** RN 0.82 requires React 19.1.1 (exact). Xcode 26.5 needs `objectVersion` set to 60 for `pod install` (Podfile handles this). fmt library needs consteval→constexpr patch (Podfile post_install hook). Hermes does not support `structuredClone()` — use `JSON.parse(JSON.stringify())` instead.
 
+### Toolchain requirements
+
+- **Xcode 26** (full app — Command Line Tools alone are not enough) with an iOS 26 SDK
+- **CocoaPods** — install via Homebrew (`brew install cocoapods`). The macOS
+  system Ruby (2.6) is too old for current CocoaPods.
+- **Node 20+** and npm 11+
+- npm 11 blocks dependency install scripts by default. `llama.rn` ships
+  prebuilt iOS artifacts (`ios/rnllama.xcframework`); if that directory is
+  missing after `npm install`, run
+  `npm install-scripts approve llama.rn && npm rebuild llama.rn`.
+
+### Releasing to the App Store
+
+Everything needed for a submission — listing copy, App Privacy answers, age
+rating guidance, review notes and the build/upload sequence — is in
+[`docs/app-store-submission.md`](docs/app-store-submission.md).
+
 ---
 
 ## Project Structure
@@ -159,7 +176,7 @@ Energy at 0 + 3 critical stats → creature passes away → gravestone screen �
 - [x] Real-time stat clock
 - [x] Release build with pre-compiled Hermes bytecode
 - [x] App icon (voidling egg, amber-on-black)
-- [ ] iOS Widget
+- [ ] iOS Widget (deferred to v1.1 — the extension target was removed from the Xcode project for 1.0; the JS-side `WidgetExporter` and `WidgetBridge` are kept for it)
 - [ ] Android support
 - [ ] Notifications
 - [ ] Two-parent breeding mechanics
