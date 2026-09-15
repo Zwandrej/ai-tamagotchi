@@ -17,9 +17,9 @@ A companion creature with real personality, memory, DNA, and evolution — drive
 | 🍎 **Care System** | Feed, play, clean, heal, tuck in, wake up — plus **scold** (negative interaction, -25 happiness). Stats decay over real time. |
 | ⏱️ **Sleep Cooldown** | Tuck in for 5+ minutes to recover energy. Wake too soon and they're grumpy — no infinite energy loop. |
 | 🧬 **Creature DNA** | Every creature has a unique genetic identity. Traits, personality, and appearance procedurally generated. |
-| 🧠 **Episodic Memory** | Rich event-based memories with mood context and stat snapshots. Memory viewer screen. |
+| 🧠 **Episodic Memory** | Rich event-based memories with mood context and stat snapshots. Stored memories are fed into the creature's prompt, and there is a memory viewer screen. Recall is only as good as the model — see [Known Limitations](#known-limitations). |
 | 🧫 **Epigenome** | Memories reshape gene expression over time. Happy memories → +social. Neglect → +resilience. Modifiers inherited at 70% strength. |
-| 💬 **Conversation** | Chat affects the creature — kind words boost happiness, mean words hurt (×15 negative multiplier). Combined prompt format for reliable small-model responses. |
+| 💬 **Conversation** | Chat affects the creature — kind words boost happiness, mean words hurt (×15 negative multiplier). Real role-structured messages, so the model's own chat template applies. |
 | 🦋 **Evolution** | Egg → Baby → Child → Teen → Adult (~18 days real time). 4 branches: Angel, Gremlin, Trickster, Sage. |
 | 💀 **Death** | Neglect leads to consequences — the creature can pass away if 3+ stats hit zero. |
 | 🧬 **DNA Export** | On death, export the creature's full DNA as a `.json` file via iOS Share sheet. Includes genotype, epigenome, memories. |
@@ -111,26 +111,31 @@ ai-tamagotchi/
 Pure TypeScript (`creatureEngine.ts`). Every interaction produces a new immutable state. DNA procedurally generated, persisted via MMKV.
 
 ### AI Pipeline
-1. Model selected at creation → downloads GGUF from HuggingFace
-2. On hatch → `llama.rn` loads model into memory
-3. Chat → combined prompt format: system instructions + conversation history + `USER: ... \n\n ASSISTANT:`
-4. System prompt includes: DNA, personality, stage voice, state-driven behavior hints
-5. Inference on-device, stage-aware template fallback if no model
+1. Model chosen at creation → GGUF downloaded from HuggingFace, verified against a SHA-256 digest
+2. `llama.rn` loads it on hatch, and **reloads it on every launch** — the choice is persisted with the creature
+3. Chat → role-structured messages (`system` + history + `user`), so the model's own chat template applies
+4. System prompt includes: DNA, personality, stage voice, current state as feelings, and the creature's stored memories
+5. Inference on-device. A stage-aware template engine answers *only* when no model is loaded, and the chat header names the engine that replied
 
 ### Stage-Aware Voice
-The system prompt injects stage-specific speaking rules:
-- **Egg** — single words or sounds only (max 2 words)
-- **Baby** — 3-6 word sentences, baby talk, simple emotions
+The system prompt shapes *how* the creature speaks — tone, not word counts. An earlier version capped length per stage ("NEVER write more than 2 words"), which contradicted the rule asking for a sentence and filtered every reply into baby-talk, question unanswered:
+- **Egg** — mostly feelings; a few words at most
+- **Baby** — simple words, short sentences, easily amazed
 - **Child** — short sentences, curious, asks questions
 - **Teen** — growing confidence, occasional moodiness
 - **Adult** — full sentences, distinct personality
 
 ### State-Driven Dialogue
-Hunger, energy, happiness, and hygiene are injected as natural-language behavior hints:
-- Hunger > 80 → "⚠️ VERY hungry. Mention food."
-- Energy < 20 → "⚠️ EXHAUSTED. Act drowsy, yawn."
-- Happiness < 30 → "⚠️ UNHAPPY. Need comfort."
-- Hygiene < 30 → "⚠️ DIRTY. Want to be cleaned."
+Hunger, energy, happiness and hygiene are injected as plain statements of feeling:
+- Hunger > 80 → "You are very hungry."
+- Energy < 20 → "You are exhausted and very sleepy."
+- Happiness < 30 → "You feel unhappy and want comfort."
+- Hygiene < 30 → "You feel dirty."
+
+They used to be shouted imperatives ("⚠️ EXHAUSTED. Act drowsy, yawn."), which the model obeyed
+literally — answering "*yawn*" instead of the question, and drowning out both the question and
+the memories. A rule in `HOW YOU TALK` keeps them in proportion: *"Let how you feel colour your
+answer, but never instead of answering it."*
 
 ### DNA & Inheritance
 - **Genotype**: procedural species, seed, base stats, trait alleles
@@ -148,9 +153,19 @@ Hunger, energy, happiness, and hygiene are injected as natural-language behavior
 Energy at 0 + 3 critical stats → creature passes away → gravestone screen → export DNA or hatch new.
 
 ### Persistence
-- **MMKV**: Full creature state (stats, personality, stage, branch, age, sleep state, epigenome)
-- **RNFS**: Downloaded GGUF models
+- **MMKV**: Full creature state (stats, personality, stage, branch, age, sleep state, epigenome) **and the model the creature runs on** — without the latter, every relaunch silently reverted to the template engine
+- **RNFS**: Downloaded GGUF models, verified by SHA-256 on download
 - **Session-only**: Chat messages
+
+## Known Limitations
+
+Small app, real gaps. Stated so nobody has to discover them:
+
+- **1B models recall literally.** The creature reliably names a memory when asked about it directly — *"do you remember when I scolded you?" → "you were cross with me... it still stings"* — but can miss a vague question like *"what did I just do?"*, answering atmospherically instead of with the event. It holds the memory; it does not always connect the question to it. Bigger models close this gap at the cost of download size and RAM, so 1.0 stays lean.
+- **Model downloads can stall on some networks.** HuggingFace redirects to a signed CDN, and on some paths (observed over QUIC/HTTP-3) the transfer stalls without ever erroring. A 45-second no-progress watchdog now turns that into a visible error instead of an hour-long hang. Retrying, or a different connection, works.
+- **The fallback engine is visible, never silent.** With no model loaded, the creature answers from a stage-aware template engine; the chat header names the engine that replied (`# engine: llama-3.2-1b`), so canned lines can't be mistaken for the LLM.
+- **No way to clear a conversation.** History feeds the prompt and only resets when the creature is replaced.
+- **iPhone only, no widget.** The widget is deferred to 1.1; its extension target is not in the 1.0 project.
 
 ---
 
@@ -159,7 +174,7 @@ Energy at 0 + 3 critical stats → creature passes away → gravestone screen �
 - [x] Terminal-themed UI
 - [x] Core creature state machine
 - [x] DNA system & ASCII renderer
-- [x] llama.cpp integration with combined prompt format
+- [x] llama.cpp integration with role-structured messages and pinned chat template
 - [x] Chat with LLM + sentiment effects (positive & negative)
 - [x] Stage-aware template fallback (matches LLM voice rules)
 - [x] Care system (7 actions: feed, play, clean, heal, tuck_in, wake_up, scold)
@@ -171,7 +186,9 @@ Energy at 0 + 3 critical stats → creature passes away → gravestone screen �
 - [x] DNA import with file picker + single-parent inheritance
 - [x] Epigenome — memories reshape gene expression
 - [x] Episodic memory + viewer
-- [x] Model download & management
+- [x] Model download & management (SHA-256 verified, 45s stall watchdog)
+- [x] Model persisted with the creature and reloaded on launch
+- [x] Chat header names the answering engine (never a silent fallback)
 - [x] MMKV persistence (full state, survives reboots)
 - [x] Real-time stat clock
 - [x] Release build with pre-compiled Hermes bytecode
