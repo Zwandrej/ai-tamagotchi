@@ -260,7 +260,34 @@ performance is worth checking on real hardware.
 
 ---
 
-## 8. Pre-submission checklist
+## 8. Known `npm audit` findings (not a submission blocker)
+
+`npm audit` reports 17 advisories (9 high, 7 moderate, 1 low). Apple does not
+scan npm dependencies, and none of these are reachable in the shipped app:
+
+| Package | Chain | Ships in the app? |
+|---|---|---|
+| metro, metro-config, metro-transform-worker | RN build tooling | No |
+| shell-quote | `@react-native-community/cli`, react-devtools-core | No |
+| js-yaml | cosmiconfig, eslint, babel-plugin-istanbul | No |
+| browserslist, image-size, brace-expansion, joi, qs, body-parser, launch-editor, baseline-browser-mapping | build tooling | No |
+| nanoid@3.3.12 | `@react-navigation/native` → core → routers | Yes — DoS only with an attacker-controlled `size` |
+| query-string@7.1.3 → decode-uri-component | `@react-navigation/core` | Yes — DoS only with crafted input |
+
+Neither runtime package is imported by app code; both arrive as transitive
+dependencies of React Navigation, and their advisories all require
+attacker-controlled input to those specific functions, which nothing in this
+app passes. Every other advisory is in the build pipeline, where the only
+input is the developer's own configuration.
+
+**Do not run `npm audit fix` before the first verified build.** It moves
+transitive versions of metro and the jest/CLI tooling — exactly the layer
+React Native 0.82's build is sensitive to. Get a green archive first, so that
+any breakage from a later audit fix is attributable to it.
+
+---
+
+## 9. Pre-submission checklist
 
 - [x] Widget target removed from the Xcode project (v1.1 feature)
 - [x] Dangling widget target references removed from `project.pbxproj`
