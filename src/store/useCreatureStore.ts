@@ -34,6 +34,8 @@ function save(creature: CreatureState | null, thought: string, modelId?: string)
     t: thought,
     // Which brain the creature was hatched with. Without this the choice was
     // lost on every restart and the app had no way to reload it.
+    // Callers must pass it explicitly: JSON.stringify drops undefined, so an
+    // omitted argument does not leave the field alone — it erases it.
     m: modelId,
   });
   mmkv.set(KEY, data);
@@ -74,9 +76,9 @@ const creator: StateCreator<ZStore, [], []> = (_set, _get) => {
     create(species, name, seed?) { plain.create(species, name, seed); update(); },
     createFromDNA(dna: any, name: string) { plain.createFromDNA(dna, name); update(); },
     care(action) { const r = plain.care(action); update(); return r; },
-    age(h) { plain.age(h); _set({ creature: plain.creature }); save(plain.creature, plain.lastThought); },
+    age(h) { plain.age(h); _set({ creature: plain.creature }); save(plain.creature, plain.lastThought, plain.modelId); },
     chat(m, r) { plain.chat(m, r); update(); },
-    setThought(t) { plain.setThought(t); _set({ lastThought: t }); save(plain.creature, t); },
+    setThought(t) { plain.setThought(t); _set({ lastThought: t }); save(plain.creature, t, plain.modelId); },
     setModelId(id) {
       plain.setModelId(id);
       _set({ modelId: id });
@@ -84,7 +86,7 @@ const creator: StateCreator<ZStore, [], []> = (_set, _get) => {
       // creature may not be saved again before the app is killed.
       save(plain.creature, plain.lastThought, id);
     },
-    ageCreature() { plain.ageCreature(); _set({ creature: plain.creature ? { ...plain.creature } : null }); save(plain.creature, plain.lastThought); },
+    ageCreature() { plain.ageCreature(); _set({ creature: plain.creature ? { ...plain.creature } : null }); save(plain.creature, plain.lastThought, plain.modelId); },
 
     restore(saved) {
       const full: CreatureState = (saved as any).animation ? saved as CreatureState : { ...saved, animation: { current: 'idle' as const, frame: 0, lastUpdated: new Date().toISOString() } };
@@ -124,12 +126,20 @@ if (saved?.creature) {
 // engine and upgrades itself once the model is resident.
 hydrateDownloadedModels()
   .then((found) => {
-    // Saves written before the model was recorded have no modelId. If exactly
-    // one model is on disk, that is unambiguous, so adopt it rather than
-    // stranding the creature on the template engine.
-    const chosen = saved?.modelId || (found.length === 1 ? found[0] : '');
-    if (chosen) return restoreLoadedModel(chosen);
-    return false;
+    // 'apple-ondevice' means "no downloadable model". Every creature created
+    // before the create screen was fixed still carries it, because that screen
+    // hardcoded it as the default and never recorded the row actually picked,
+    // so it is not a real preference. If a model is on disk, use it.
+    const configured =
+      saved?.modelId && saved.modelId !== 'apple-ondevice' ? saved.modelId : '';
+    const chosen = configured || (found.length === 1 ? found[0] : '');
+    if (!chosen) return false;
+    if (chosen !== saved?.modelId) {
+      // Adopted rather than configured: write it down so the save reflects the
+      // model that is truly answering.
+      useCreatureStore.getState().setModelId(chosen);
+    }
+    return restoreLoadedModel(chosen);
   })
   .catch((err) => {
     console.warn('[store] model restore failed:', err);

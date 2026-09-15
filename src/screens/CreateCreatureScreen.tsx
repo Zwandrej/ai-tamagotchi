@@ -44,6 +44,7 @@ export function CreateCreatureScreen() {
   const [importedDNA, setImportedDNA] = useState<CreatureDNA | null>(null);
   const storeCreate = useCreatureStore((s) => s.create);
   const storeCreateFromDNA = useCreatureStore((s) => s.createFromDNA);
+  const storeSetModelId = useCreatureStore((s) => s.setModelId);
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
   const handleImportDNA = async () => {
@@ -87,6 +88,7 @@ export function CreateCreatureScreen() {
       }
       // Create creature from inherited DNA (species auto-derived from genotype)
       storeCreateFromDNA(importedDNA, trimmed);
+      storeSetModelId(modelId);
       navigation.replace('Home');
     } catch (err: any) { Alert.alert('[err]', err?.message || 'Failed.'); }
   };
@@ -116,6 +118,10 @@ export function CreateCreatureScreen() {
         await loadModel(getModelPath(modelId)!, modelId);
       }
       storeCreate(selected, trimmed);
+      // The store — not this screen — decides what gets persisted, and the two
+      // disagreed: tapping a model row only changed local state, so every
+      // creature was saved as the built-in engine however it was hatched.
+      storeSetModelId(modelId);
       navigation.replace('Home');
     } catch (err: any) { Alert.alert('[err]', err?.message || 'Failed.'); }
   };
