@@ -21,6 +21,13 @@ let _activeModelId = '';
 const _downloadedModels = new Map<string, string>();
 let _inferenceLock = false; // serialize llama context access // modelId -> filePath
 
+/**
+ * How long a download may deliver no new bytes before we treat it as stalled.
+ * Model files are hundreds of megabytes, so a slow-but-alive transfer is
+ * normal; a transfer with no progress at all for this long is not.
+ */
+const DOWNLOAD_STALL_TIMEOUT_MS = 45_000;
+
 // ──────────────────────────────────────────────────────────────
 // Public API
 // ──────────────────────────────────────────────────────────────
@@ -68,10 +75,18 @@ export async function downloadModel(
   // because an interrupted download also leaves a file behind.
   const exists = await RNFS.exists(destPath);
   if (!exists) {
-    const { promise } = RNFS.downloadFile({
+    let lastBytes = 0;
+    let lastProgressAt = Date.now();
+    let stallTimer: ReturnType<typeof setInterval> | null = null;
+
+    const { promise, jobId } = RNFS.downloadFile({
       fromUrl: model.url,
       toFile: destPath,
       progress: (res) => {
+        if (res.bytesWritten !== lastBytes) {
+          lastBytes = res.bytesWritten;
+          lastProgressAt = Date.now();
+        }
         if (res.contentLength > 0) {
           const pct = Math.round((res.bytesWritten / res.contentLength) * 100);
           onProgress?.(Math.min(100, pct), 'download');
@@ -80,10 +95,37 @@ export async function downloadModel(
       progressDivider: 10,
     });
 
-    const result = await promise;
-    if (result.statusCode !== 200) {
-      await RNFS.unlink(destPath).catch(() => {});
-      throw new Error(`Download failed: ${result.statusCode}`);
+    try {
+      // CFNetwork can stall mid-transfer without ever failing: the bytes just
+      // stop arriving and the resource timeout is an hour, so the UI would sit
+      // at "downloading… 0%" indefinitely. Seen in practice when the redirect
+      // to Hugging Face's CDN hangs during TLS. Watch for a lack of progress
+      // and turn that into a real, actionable error instead.
+      const result = await Promise.race([
+        promise,
+        new Promise<never>((_, reject) => {
+          stallTimer = setInterval(() => {
+            if (Date.now() - lastProgressAt >= DOWNLOAD_STALL_TIMEOUT_MS) {
+              if (stallTimer) clearInterval(stallTimer);
+              RNFS.stopDownload(jobId);
+              reject(
+                new Error(
+                  `Download stalled: no data received for ${Math.round(
+                    DOWNLOAD_STALL_TIMEOUT_MS / 1000,
+                  )}s. Check your connection and try again.`,
+                ),
+              );
+            }
+          }, 5000);
+        }),
+      ]);
+
+      if (result.statusCode !== 200) {
+        await RNFS.unlink(destPath).catch(() => {});
+        throw new Error(`Download failed: ${result.statusCode}`);
+      }
+    } finally {
+      if (stallTimer) clearInterval(stallTimer);
     }
   }
 
