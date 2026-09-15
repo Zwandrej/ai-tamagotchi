@@ -93,7 +93,7 @@ release notes.
 
 ## 9. Contact
 
-Questions about this policy: **<SUPPORT_EMAIL>**
+Questions about this policy: **andrej.zwitter@gmail.com**
 
 AI Tamagotchi is open source — the complete source code, including the code
 that handles all local storage, is available at

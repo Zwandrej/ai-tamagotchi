@@ -24,6 +24,13 @@ certificates, TestFlight) depends on it. Start it while Xcode downloads.
 
 ## 1. App Store listing copy
 
+### Pricing
+
+**Free**, no in-app purchases. Decided for the 1.0 release: it maximizes
+reviews and TestFlight feedback, and there is no server cost to recover (all
+inference is on-device). Leave the price tier at "Free" and do not create any
+in-app purchase products.
+
 ### Name (30 char max)
 ```
 AI Tamagotchi
@@ -264,9 +271,13 @@ performance is worth checking on real hardware.
 - [x] `ITSAppUsesNonExemptEncryption = false` (skips export compliance prompt)
 - [x] Dark interface style forced (terminal theme)
 - [x] Privacy manifest present (`PrivacyInfo.xcprivacy`)
-- [x] Test suite compiles and passes
+- [x] Test suite compiles and passes (95 tests, 3 suites)
+- [x] Model downloads verified against the published SHA-256 digest before use
+- [x] Model catalog: dead upstream URL removed, real artifact sizes recorded
 - [x] Dev-name hardcoded in the creature prompt removed
 - [x] Content guard added to the creature system prompt
+- [x] Pricing decided: free, no in-app purchases
+- [x] Support email filled in (andrej.zwitter@gmail.com)
 - [ ] Paid developer membership active
 - [ ] Privacy policy + support pages live at public URLs
 - [ ] Xcode installed, pods installed, archive builds clean
@@ -277,4 +288,3 @@ performance is worth checking on real hardware.
 - [ ] App record: name, subtitle, description, keywords, category, age rating
 - [ ] App Privacy: "Data Not Collected"
 - [ ] Review notes pasted
-- [ ] Pricing decided

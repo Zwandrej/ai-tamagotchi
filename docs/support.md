@@ -7,7 +7,7 @@ aesthetic, no accounts, no cloud, no data collection.
 
 ## Contact
 
-- **Email:** `<SUPPORT_EMAIL>`
+- **Email:** andrej.zwitter@gmail.com
 - **Bug reports & feature requests:** https://github.com/Zwandrej/ai-tamagotchi/issues
 
 We aim to reply within a few days.
