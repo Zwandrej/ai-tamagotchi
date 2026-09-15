@@ -34,13 +34,17 @@ If you want richer, free-form conversation, you can download a language model:
 | Model | Download size | Best for |
 |---|---|---|
 | Built-in engine (default) | no download | Instant replies, works fully offline |
-| TinyLlama 1.1B | ~0.6 GB | Smallest download, happy on older phones |
-| Llama 3.2 1B | ~0.7 GB | Fast, good for quick responses |
+| Llama 3.2 1B | ~0.7 GB | **Recommended** — best balance of quality and speed |
+| TinyLlama 1.1B | ~0.6 GB | Smallest download; replies can be flat and repetitive |
 | Gemma 2 2B | ~1.4 GB | Richer conversation, recent phones |
 | Phi-2 2.7B | ~1.6 GB | The smartest of the set, wants the most free RAM |
 
 The bigger the model, the slower and more memory-hungry it gets. If replies
 feel sluggish on your device, drop down a size.
+
+The two smallest models are close in size but not in quality: TinyLlama is a
+smaller base model, and it tends to answer plainly rather than in character.
+Unless you are short on space, Llama 3.2 1B is worth the extra ~100 MB.
 
 ### Why do model downloads take so long?
 
