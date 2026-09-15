@@ -204,14 +204,6 @@ export function generateTemplateResponse(
  * Build the system prompt — creature identity and voice.
  * Message assembly with proper role separation happens in AIService.
  */
-export function buildLLMPrompt(
-  creature: CreatureState,
-  _conversationHistory: { role: string; content: string }[],
-  _userMessage: string,
-): string {
-  return buildSystemPrompt(creature);
-}
-
 /** Build the system prompt that defines the creature's identity and voice */
 export function buildSystemPrompt(creature: CreatureState): string {
   const species = creature.dna.genotype.species;

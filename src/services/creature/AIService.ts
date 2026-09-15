@@ -9,7 +9,7 @@
 import { initLlama, type LlamaContext } from 'llama.rn';
 import RNFS from 'react-native-fs';
 import type { CreatureState } from '../../types/creature';
-import { MODELS, buildLLMPrompt, type ModelInfo } from './ModelManager';
+import { MODELS, buildSystemPrompt, type ModelInfo } from './ModelManager';
 import { verifyFileSha256 } from './integrity';
 
 // ──────────────────────────────────────────────────────────────
@@ -188,7 +188,8 @@ export async function loadModel(
       model: modelPath,
       n_ctx: 2048,
       n_batch: 512,
-      n_threads: 2,
+      // Two threads on a 6-core phone needlessly halves generation speed.
+      n_threads: 4,
     },
     (progress: number) => onProgress?.(Math.round(progress * 100)),
   );
@@ -210,11 +211,26 @@ export async function generateResponse(
     return generateTemplateResponse(creature, userMessage);
   }
 
-  const systemPrompt = buildLLMPrompt(creature, conversationHistory, userMessage);
+  const systemPrompt = buildSystemPrompt(creature);
 
-  // For Llama 3.2 1B, combine system prompt with user message
-  // in a single turn. Multi-role chat often confuses small models.
-  const combined = `${systemPrompt}\n\nUSER: ${userMessage}\n\nASSISTANT:`;
+  // These roles are the whole ballgame. The GGUF carries TinyLlama's own
+  // Zephyr chat template, and llama.rn applies it to this array to produce
+  // <|system|> / <|user|> / <|assistant|> turns.
+  //
+  // The previous version collapsed everything into ONE user message and added
+  // hand-written "USER:" / "ASSISTANT:" markers. The model therefore never saw
+  // a system turn; it just saw text that looked like a dialogue transcript and
+  // continued the pattern — inventing conversation partners, addressing itself
+  // by name ("PIXEL: I'm not a human.") and emitting garbage tokens. It was
+  // completing, not answering.
+  const messages: { role: 'system' | 'user' | 'assistant'; content: string }[] = [
+    { role: 'system', content: systemPrompt },
+    ...conversationHistory.slice(-8).map((m) => ({
+      role: m.role === 'creature' ? 'assistant' : m.role === 'system' ? 'system' : 'user',
+      content: m.content,
+    })) as { role: 'system' | 'user' | 'assistant'; content: string }[],
+    { role: 'user', content: userMessage },
+  ];
 
   // Serialize access to the llama context
   while (_inferenceLock) {
@@ -224,11 +240,27 @@ export async function generateResponse(
 
   try {
     const result = await _context.completion({
-      // @ts-ignore
-      messages: [{ role: 'user', content: combined }],
-      n_predict: 256,
-      temperature: 0.8,
+      messages,
+      // The creature is meant to speak 1-3 sentences. 256 tokens invited long
+      // monologues that ran straight past the end of the turn.
+      n_predict: 120,
+      temperature: 0.7,
       top_p: 0.9,
+      // A 1.1B model repeats itself readily; its instruct tuning assumes a
+      // repetition penalty.
+      penalty_repeat: 1.15,
+      // Belt and braces: even with the right template, tiny models sometimes
+      // keep going and write both sides of the exchange.
+      stop: [
+        '<|user|>',
+        '<|assistant|>',
+        '<|system|>',
+        '</s>',
+        '\nOwner:',
+        '\nOWNER:',
+        '\nUSER:',
+        '\nASSISTANT:',
+      ],
     });
     _inferenceLock = false;
     const text = result.text?.trim();
