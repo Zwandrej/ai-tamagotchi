@@ -105,7 +105,9 @@ export function ChatScreen() {
             ) : null}
             {happinessDelta !== null && (
               <Text style={[styles.hapDelta, { color: happinessDelta >= 0 ? Term.green : Term.red }]}>
-                [{happinessDelta >= 0 ? '+' : ''}{happinessDelta}] happiness
+                {/* Rounded: the delta is a float subtraction, and "+4.199999999999999 happiness"
+                    is what a screenshot of this screen used to show. */}
+                [{happinessDelta >= 0 ? '+' : ''}{Math.round(happinessDelta * 10) / 10}] happiness
               </Text>
             )}
           </View>

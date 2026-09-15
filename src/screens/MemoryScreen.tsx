@@ -44,7 +44,7 @@ export function MemoryScreen() {
             </Text>
             {mem.statsAtTime && (
               <Text style={styles.metaText}>
-                stats: hunger {mem.statsAtTime.hunger}%  happy {mem.statsAtTime.happiness}%  energy {mem.statsAtTime.energy}%
+                stats: hunger {Math.round(mem.statsAtTime.hunger)}%  happy {Math.round(mem.statsAtTime.happiness)}%  energy {Math.round(mem.statsAtTime.energy)}%
               </Text>
             )}
           </View>
