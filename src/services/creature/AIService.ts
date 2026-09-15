@@ -270,7 +270,7 @@ export async function generateResponse(
     });
     _inferenceLock = false;
     const text = result.text?.trim();
-    if (text) return cleanResponse(text);
+    if (text) return cleanResponse(text, creature.name);
   } catch (e) {
     _inferenceLock = false;
     console.warn('[AIService] LLM inference failed:', e);
@@ -293,11 +293,20 @@ export function generateInternalThought(creature: CreatureState): string {
   return moodThoughts[Math.floor(Math.random() * moodThoughts.length)]!;
 }
 
-function cleanResponse(text: string): string {
+function cleanResponse(text: string, creatureName?: string): string {
   let cleaned = text
     .replace(/^["']|["']$/g, '')
     .replace(/^(\*[^*]+\*)\s*\1/, '$1')
     .trim();
+
+  // Small models like to open with a speaker label, copying the shape of the
+  // conversation they were shown — TinyLlama replied "PixeL: I don't eat
+  // anything." on the exact prompt that made Llama-3.2 answer in character.
+  // That is scaffolding, not dialogue, so drop it.
+  const labels = ['owner', 'human', 'user', 'assistant', 'you', 'system', 'creature'];
+  if (creatureName) labels.push(creatureName.toLowerCase());
+  const labelPattern = new RegExp(`^(${labels.map((l) => l.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})\\s*[:\\-]\\s+`, 'i');
+  cleaned = cleaned.replace(labelPattern, '').trim();
 
   // If response looks truncated (no sentence-ending punctuation near the end),
   // trim back to the last complete sentence boundary

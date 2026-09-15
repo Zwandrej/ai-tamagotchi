@@ -47,7 +47,7 @@ export const MODELS: ModelInfo[] = [
     quant: 'Q4_K_M',
     url: 'https://huggingface.co/bartowski/Llama-3.2-1B-Instruct-GGUF/resolve/main/Llama-3.2-1B-Instruct-Q4_K_M.gguf',
     sha256: '6f85a640a97cf2bf5b8e764087b1e83da0fdb51d7c9fab7d0fece9385611df83',
-    description: 'Fastest. Good for quick responses on older devices.',
+    description: 'Recommended. Best balance of quality and speed — holds character well.',
   },
   {
     id: 'tinyllama-1.1b',
@@ -58,7 +58,7 @@ export const MODELS: ModelInfo[] = [
     quant: 'Q4_K_M',
     url: 'https://huggingface.co/TheBloke/TinyLlama-1.1B-Chat-v1.0-GGUF/resolve/main/tinyllama-1.1b-chat-v1.0.Q4_K_M.gguf',
     sha256: '9fecc3b3cd76bba89d504f29b616eedf7da85b96540e490ca5824d3f7d2776a0',
-    description: 'Very fast. Simple but charming responses.',
+    description: 'Smallest download. Fast, but replies can be flat and repetitive.',
   },
   {
     id: 'phi-2',
@@ -268,38 +268,4 @@ export function buildSystemPrompt(creature: CreatureState): string {
     'Owner: what do you like to eat?',
     `${creature.name}: Warm soup! And maybe a little star cookie. \u2606`,
   ].join('\n');
-}
-
-// ──────────────────────────────────────────────────────────────
-// Model Download / Load stubs (llama.cpp integration TBD)
-// ──────────────────────────────────────────────────────────────
-
-/**
- * Check if a model file exists locally.
- * Returns the path if found, null otherwise.
- */
-export function findLocalModel(modelId: string): string | null {
-  // Stub: llama.cpp native module integration needed
-  // Would check ~/Documents/models/ or app bundle for .gguf files
-  return null;
-}
-
-/**
- * Download a model from HuggingFace.
- * Returns progress as 0-100, or throws on error.
- * Requires llama.cpp native module for actual inference.
- */
-export async function downloadModel(
-  modelId: string,
-  onProgress?: (pct: number) => void,
-): Promise<string> {
-  const model = MODELS.find((m) => m.id === modelId);
-  if (!model) throw new Error(`Unknown model: ${modelId}`);
-
-  // Stub: would use react-native-fs to download
-  // and validate checksum before returning path
-  throw new Error(
-    'Model download requires llama.cpp native module. ' +
-    'Use template responses for now, or install llama.cpp integration.'
-  );
 }
