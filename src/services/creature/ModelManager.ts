@@ -237,6 +237,24 @@ export function buildSystemPrompt(creature: CreatureState): string {
   if (hygiene < 30) stateHints.push('⚠️ You feel DIRTY. You want to be cleaned.');
   if (creature.isSleeping) stateHints.push('💤 You are ASLEEP. Do not respond unless woken up.');
 
+  // The creature's own memories. These carry real weight in the app — scolding
+  // writes "You scolded me. I feel hurt.", the Memory screen lists them, and
+  // addMemory records which trait each one reshapes — but the prompt never
+  // mentioned a single one, so the model could not refer to anything that had
+  // ever happened to it. A pet that cannot remember being scolded is not the
+  // pet the app advertises.
+  const memoryLines = [...creature.dna.history.keyMemories]
+    .sort((a, b) => Math.abs(b.impact) - Math.abs(a.impact))
+    .slice(0, 4)
+    .map((m) => {
+      const tone = m.impact <= -0.3
+        ? ' — it still stings'
+        : m.impact >= 0.3
+        ? ' — it made you happy'
+        : '';
+      return `- ${m.event}${tone}`;
+    });
+
   // Kept deliberately short, and it ends by SHOWING the model one exchange
   // rather than describing more rules. A ~350-token rule list was ignored
   // wholesale by TinyLlama, which replied as a generic AI assistant ("I can
@@ -258,6 +276,7 @@ export function buildSystemPrompt(creature: CreatureState): string {
     '',
     stateHints.join('\n'),
     '',
+    ...(memoryLines.length ? ['THINGS YOU REMEMBER:', ...memoryLines, ''] : []),
     'HOW YOU TALK:',
     '- First person, 1-3 short sentences. Never longer.',
     "- Write ONLY your own words. Never write your owner's lines, and never label who is speaking.",
