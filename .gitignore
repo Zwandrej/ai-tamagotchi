@@ -7,9 +7,11 @@ models/*.gguf
 # iOS
 ios/Pods/
 ios/build/
-*.xcworkspace/xcuserdata/
-*.xcodeproj/xcuserdata/
-*.xcuserdata
+xcuserdata/
+*.xcuserstate
+ios/.xcode.env.local
+*.ipa
+*.dSYM.zip
 
 # Android
 android/app/build/
