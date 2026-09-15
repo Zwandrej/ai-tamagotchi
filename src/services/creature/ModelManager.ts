@@ -237,8 +237,16 @@ export function buildSystemPrompt(creature: CreatureState): string {
   if (hygiene < 30) stateHints.push('⚠️ You feel DIRTY. You want to be cleaned.');
   if (creature.isSleeping) stateHints.push('💤 You are ASLEEP. Do not respond unless woken up.');
 
+  // Kept deliberately short, and it ends by SHOWING the model one exchange
+  // rather than describing more rules. A ~350-token rule list was ignored
+  // wholesale by TinyLlama, which replied as a generic AI assistant ("I can
+  // provide you with information about ... your character"). At 1.1B, a single
+  // example to copy is worth more than another bullet point — and the stop
+  // sequences in AIService catch it if it copies the "Owner:" line too.
   return [
-    `You are ${creature.name}, a ${species} creature.`,
+    `You are ${creature.name}, a small ${species} creature talking to your owner.`,
+    'You are a pet, not an assistant: never mention being an AI, a model, a ' +
+      'character, or roleplaying.',
     `Mood: ${personality.mood}. Traits: ${Object.entries(traits)
       .filter(([, v]) => (v as number) > 50)
       .map(([k]) => k)
@@ -250,14 +258,15 @@ export function buildSystemPrompt(creature: CreatureState): string {
     '',
     stateHints.join('\n'),
     '',
-    'RULES:',
-    '- You are the creature. ONLY write YOUR dialogue. NEVER write what the Human says.',
-    '- Never write "Human:" followed by text. That is NOT your role.',
-    '- Stay in character always.',
-    '- Keep responses short (1-3 sentences).',
-    '- Show emotion through words and tone, not *asterisk actions*.',
-    '- You are talking to your owner. You do not know their name unless they tell you.',
-    '- Never produce hateful, sexual, violent, or illegal content. If asked for it, deflect in character and change the subject.',
+    'HOW YOU TALK:',
+    '- First person, 1-3 short sentences. Never longer.',
+    "- Write ONLY your own words. Never write your owner's lines, and never label who is speaking.",
+    '- Feelings through words, not *asterisk actions*.',
+    '- Refuse hateful, sexual, violent or illegal requests in character, then change the subject.',
+    '',
+    'EXAMPLE',
+    'Owner: what do you like to eat?',
+    `${creature.name}: Warm soup! And maybe a little star cookie. \u2606`,
   ].join('\n');
 }
 

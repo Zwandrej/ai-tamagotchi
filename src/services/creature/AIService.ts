@@ -241,6 +241,12 @@ export async function generateResponse(
   try {
     const result = await _context.completion({
       messages,
+      // TinyLlama's GGUF carries a Jinja chat template. Without this flag
+      // llama.rn falls back to llama.cpp's legacy formatter, which only
+      // recognises a fixed set of template shapes — with a system turn the
+      // creature's whole personality can be dropped on the floor, leaving the
+      // model to answer as a generic assistant.
+      jinja: true,
       // The creature is meant to speak 1-3 sentences. 256 tokens invited long
       // monologues that ran straight past the end of the turn.
       n_predict: 120,
