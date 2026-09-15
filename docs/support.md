@@ -48,6 +48,15 @@ They're fetched directly from Hugging Face's servers while you wait — the app
 doesn't stage them anywhere else. Keep the app in the foreground and stay on
 Wi-Fi for the larger models.
 
+### A download seems stuck at 0%
+
+Restart it. The app watches for a download that stops making progress and, if
+no data arrives for 45 seconds, cancels it and tells you rather than sitting
+there forever. If it keeps stalling, your network path to Hugging Face is
+likely the problem — try a different Wi-Fi network, or turn off any VPN. The
+app verifies a model's checksum before using it, so a download that was
+interrupted can never be loaded as if it were complete.
+
 ### Where does my creature's data live? Can I back it up?
 
 Everything is stored locally on your device, and it's deleted if you delete
