@@ -11,39 +11,13 @@
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
 		761780ED2CA45674006654EE /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 761780EC2CA45674006654EE /* AppDelegate.swift */; };
 		81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */; };
-		B861C8992FCB6CED0067F27D /* BuildFile in Embed Foundation Extensions */ = {isa = PBXBuildFile; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		D7374D324E5972737B2D26C1 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
-		B861C8972FCB6CED0067F27D /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 83CBB9F71A601CBA00E9B192 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = B861C8872FCB6CEC0067F27D;
-			remoteInfo = CreatureWidgetExtension;
-		};
-		B8DE5EF82FCB75BE00D7693B /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 83CBB9F71A601CBA00E9B192 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = B8DE5EE82FCB75BD00D7693B;
-			remoteInfo = CreatureWidgetExtension;
-		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
-		B861C8652FCB69E70067F27D /* Embed Foundation Extensions */ = {
-			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = "";
-			dstSubfolderSpec = 13;
-			files = (
-				B861C8992FCB6CED0067F27D /* BuildFile in Embed Foundation Extensions */,
-			);
-			name = "Embed Foundation Extensions";
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
@@ -56,9 +30,6 @@
 		5DCACB8F33CDC322A6C60F78 /* libPods-AITamagotchi.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-AITamagotchi.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		761780EC2CA45674006654EE /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = AITamagotchi/AppDelegate.swift; sourceTree = "<group>"; };
 		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = AITamagotchi/LaunchScreen.storyboard; sourceTree = "<group>"; };
-		B861C8522FCB69E60067F27D /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
-		B861C8542FCB69E60067F27D /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
-		B8DD2FD52FCB70D100E7A044 /* AITamagotchi.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; name = AITamagotchi.entitlements; path = AITamagotchi/AITamagotchi.entitlements; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
@@ -77,7 +48,6 @@
 		13B07FAE1A68108700A75B9A /* AITamagotchi */ = {
 			isa = PBXGroup;
 			children = (
-				B8DD2FD52FCB70D100E7A044 /* AITamagotchi.entitlements */,
 				13B07FB51A68108700A75B9A /* Images.xcassets */,
 				761780EC2CA45674006654EE /* AppDelegate.swift */,
 				13B07FB61A68108700A75B9A /* Info.plist */,
@@ -92,8 +62,6 @@
 			children = (
 				ED297162215061F000B7C4FE /* JavaScriptCore.framework */,
 				5DCACB8F33CDC322A6C60F78 /* libPods-AITamagotchi.a */,
-				B861C8522FCB69E60067F27D /* WidgetKit.framework */,
-				B861C8542FCB69E60067F27D /* SwiftUI.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -150,13 +118,10 @@
 				00DD1BFF1BD5951E006B06BC /* Bundle React Native code and images */,
 				00EEFC60759A1932668264C0 /* [CP] Embed Pods Frameworks */,
 				E235C05ADACE081382539298 /* [CP] Copy Pods Resources */,
-				B861C8652FCB69E70067F27D /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
-				B861C8982FCB6CED0067F27D /* PBXTargetDependency */,
-				B8DE5EF92FCB75BE00D7693B /* PBXTargetDependency */,
 			);
 			name = AITamagotchi;
 			productName = AITamagotchi;
@@ -295,14 +260,6 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
-		B861C8982FCB6CED0067F27D /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			targetProxy = B861C8972FCB6CED0067F27D /* PBXContainerItemProxy */;
-		};
-		B8DE5EF92FCB75BE00D7693B /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			targetProxy = B8DE5EF82FCB75BE00D7693B /* PBXContainerItemProxy */;
-		};
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
