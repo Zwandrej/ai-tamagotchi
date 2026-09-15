@@ -14,7 +14,7 @@ import {
 
 import {
   generateDNA,
-  exportDNA,
+  exportDNAString,
   importDNA,
   validateDNA,
   expressTraits,
@@ -156,10 +156,10 @@ describe('DNA System', () => {
     });
   });
 
-  describe('exportDNA / importDNA', () => {
+  describe('exportDNAString / importDNA', () => {
     it('round-trips DNA correctly', () => {
       const original = generateDNA('stardrop', 'Pixel', 42);
-      const json = exportDNA(original);
+      const json = exportDNAString(original);
       const restored = importDNA(json);
       expect(restored.genotype).toEqual(original.genotype);
       expect(restored.phenotype).toEqual(original.phenotype);
