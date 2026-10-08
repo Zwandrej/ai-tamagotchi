@@ -1,4 +1,8 @@
----\ntitle: Support\n---\n\n# AI Tamagotchi — Support
+---
+title: Support
+---
+
+# AI Tamagotchi — Support
 
 An AI-powered digital pet that lives entirely on your phone. Terminal
 aesthetic, no accounts, no cloud, no data collection.

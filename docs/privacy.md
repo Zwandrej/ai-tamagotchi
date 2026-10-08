@@ -1,4 +1,8 @@
----\ntitle: Privacy Policy\n---\n\n# Privacy Policy — AI Tamagotchi
+---
+title: Privacy Policy
+---
+
+# Privacy Policy — AI Tamagotchi
 
 **Last updated: 15 September 2026**
 
