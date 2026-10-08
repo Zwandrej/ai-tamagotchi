@@ -10,7 +10,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useCreatureStore } from '../store/useCreatureStore';
 import { CreatureCard } from '../components/creature/CreatureCard';
-import { createConversation, addMessage, type ConversationState } from '../services/conversation/conversationManager';
+import { createConversation, addMessage, resetConversation, type ConversationState } from '../services/conversation/conversationManager';
 import { generateResponse, getLoadedModelId, onEngineChange, GENERATION_STALLED } from '../services/creature/AIService';
 import { Term } from '../theme';
 import type { ConversationMessage } from '../types/conversation';
@@ -30,9 +30,25 @@ export function ChatScreen() {
   useEffect(() => onEngineChange(setLoadedModel), []);
   const flatListRef = useRef<FlatList<any>>(null);
 
+  // Declared before handleSend: its dependency array is evaluated during
+  // render, so a later const would be in the temporal dead zone.
+  const handleClear = useCallback(() => {
+    setConv(resetConversation());
+    setStalled(false);
+    setInputText('');
+    setHappinessDelta(null);
+    setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 50);
+  }, []);
+
   const handleSend = useCallback(async () => {
     const trimmed = inputText.trim();
     if (!trimmed || !creature) return;
+    // A shell-style command, in keeping with the rest of the app: history is
+    // fed to the model, so the owner needs a way to take it back.
+    if (/^\/(clear|reset)$/i.test(trimmed)) {
+      handleClear();
+      return;
+    }
     try {
       setStalled(false);
       const beforeHap = creature.stats.happiness;
@@ -63,7 +79,7 @@ export function ChatScreen() {
     } catch (err: any) {
       Alert.alert('[err]', err?.message || 'Message failed');
     }
-  }, [inputText, conv, creature, chat]);
+  }, [inputText, conv, creature, chat, handleClear]);
 
   if (!creature) {
     return (
@@ -108,11 +124,23 @@ export function ChatScreen() {
               or if loading failed — and those replies look plausible enough
               that a degraded engine can go unnoticed for a whole session.
             */}
-            {loadedModel ? (
-              <Text style={styles.engineStatus}># engine: {loadedModel}</Text>
-            ) : modelId && modelId !== 'apple-ondevice' ? (
-              <Text style={styles.engineStatus}># loading {modelId}…</Text>
-            ) : null}
+            <View style={styles.statusRow}>
+              {loadedModel ? (
+                <Text style={styles.engineStatus}># engine: {loadedModel}</Text>
+              ) : modelId && modelId !== 'apple-ondevice' ? (
+                <Text style={styles.engineStatus}># loading {modelId}…</Text>
+              ) : (
+                <Text style={styles.engineStatus}># engine: built-in</Text>
+              )}
+              <TouchableOpacity
+                onPress={handleClear}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                accessibilityRole="button"
+                accessibilityLabel="Clear conversation"
+              >
+                <Text style={styles.clearBtn}>[clear]</Text>
+              </TouchableOpacity>
+            </View>
             {stalled && (
               <Text style={[styles.engineStatus, { color: Term.red }]}>
                 # no reply — the model stopped responding. send it again
@@ -192,6 +220,13 @@ const styles = StyleSheet.create({
     fontSize: Term.fontSizeSm,
     color: Term.textDim,
     marginTop: 4,
+  },
+  statusRow: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+  },
+  clearBtn: {
+    fontFamily: Term.font, fontSize: Term.fontSizeSm, color: Term.textDim,
+    marginTop: 4, paddingLeft: 12,
   },
   hapDelta: { fontFamily: Term.font, fontSize: Term.fontSizeXs, textAlign: 'center', paddingBottom: 4 },
 });
