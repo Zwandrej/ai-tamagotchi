@@ -68,6 +68,9 @@ export function makeCreatureStore(): CreatureStore {
   let creature: CreatureState | null = null;
   let lastThought = '';
   let modelId = 'apple-ondevice';
+  // When the creature was last aged. Not the same as lastInteraction: the tick
+  // must measure time since the previous tick, or it re-counts the same hours.
+  let lastAgedAt: number | null = null;
 
   const store: CreatureStore = {
     get creature() { return creature; },
@@ -78,15 +81,18 @@ export function makeCreatureStore(): CreatureStore {
     create(species: Species, name: string, seed?: number) {
       creature = createCreature(species, name, seed);
       lastThought = '★ ... ★';
+      lastAgedAt = null;
     },
 
     createFromDNA(dna: CreatureDNA, name: string) {
       creature = createFromDNA(dna, name);
       lastThought = 'Inherited life...';
+      lastAgedAt = null;
     },
 
     restore(saved: CreatureState) {
       creature = restoreCreature(saved);
+      lastAgedAt = null;
       const memories = saved.dna.history.keyMemories;
       lastThought = memories.length > 0 ? (memories[memories.length - 1]?.tag ?? '★ ... ★') : '★ ... ★';
     },
@@ -121,7 +127,15 @@ export function makeCreatureStore(): CreatureStore {
     ageCreature() {
       if (!creature) return;
       const now = Date.now();
-      const hours = (now - new Date(creature.lastInteraction).getTime()) / 3600000;
+      // Age by the time since the PREVIOUS tick. Using lastInteraction meant the
+      // same elapsed period was re-added on every tick: an hour of being left
+      // alone was counted roughly 120 times, so creatures reached adult in hours
+      // instead of days and decayed into a "death from neglect" that never
+      // happened. Seeding from lastInteraction on the first tick keeps the
+      // offline period accounted for exactly once.
+      if (lastAgedAt === null) lastAgedAt = new Date(creature.lastInteraction).getTime();
+      const hours = Math.max(0, (now - lastAgedAt) / 3600000);
+      lastAgedAt = now;
       creature = ageCreature(creature, hours);
     },
 

@@ -300,7 +300,10 @@ export function performCare(
 
       updated.stats.happiness = clamp(updated.stats.happiness + 5, STAT_MIN, STAT_MAX);
       updated.dna = updateCareSummary(updated.dna, 'feed', 0);
-      updated.dna = addMemory(updated.dna, 'fed', `You fed me when I was at ${before}% hunger`, 0.3, 'patience', moodChange || updated.personality.mood, updated.stats);
+      // Rounded: this string is written into the DNA and never regenerated, so
+      // a raw float here is permanent — the memory log read 'You fed me when I
+      // was at 25.36137684909093% hunger'.
+      updated.dna = addMemory(updated.dna, 'fed', `You fed me when I was at ${Math.round(before)}% hunger`, 0.3, 'patience', moodChange || updated.personality.mood, updated.stats);
       break;
     }
 

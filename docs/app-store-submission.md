@@ -9,12 +9,26 @@ the review questions. Values marked `<...>` need your input.
 
 | # | Requirement | Status |
 |---|---|---|
-| 1 | Paid **Apple Developer Program** membership ($99/yr) — a free Apple ID can't publish | ⬜ not enrolled |
-| 2 | **Xcode** installed, signed in with your Apple ID | ⬜ not installed |
-| 3 | **CocoaPods** installed (Homebrew route) | ⬜ blocked on system Ruby 2.6 |
-| 4 | Bundle ID `com.zwitter.aitamagotchi` registered in the developer portal | ⬜ |
-| 5 | App record created in App Store Connect | ⬜ |
+| 1 | Paid **Apple Developer Program** membership ($99/yr) — a free Apple ID can't publish | ⬜ **blocked: enrolment checkout shows the wrong country** (below) |
+| 2 | **Xcode** installed, signed in with your Apple ID | ✅ Xcode 27.0, Apple Development identity for andrej.zwitter@gmail.com |
+| 3 | **CocoaPods** installed | ✅ 1.17.0 (`unset GEM_HOME GEM_PATH RUBYOPT` before `pod`/`xcodebuild`) |
+| 4 | Bundle ID `com.zwitter.aitamagotchi` registered in the developer portal | ⬜ needs enrolment |
+| 5 | App record created in App Store Connect | ⬜ needs enrolment |
 | 6 | Privacy policy + support pages publicly reachable | ⬜ docs written, not hosted |
+| 7 | Verified on a real iPhone | ✅ iPhone 16 Pro, iOS 27.0.1 — downloads, SHA-256 verification, Metal inference and persistence all confirmed |
+
+### 0.1 The enrolment blocker
+
+An Austrian account whose checkout still shows **Netherlands**. Check, in this
+order — the first one is the usual culprit:
+
+1. **Settings → [your name] → Media & Purchases → View Account → Country/Region**
+   — the *storefront*, which is separate from the billing address.
+2. **VPN or proxy** active on the device or router — exit node country wins.
+3. A stale pending order — contact developer.apple.com/contact.
+
+Everything else is ready to go the moment this clears: the app builds, signs and
+runs on-device, and the store assets are done.
 
 ⚠️ **Enrol in the Apple Developer Program first.** Approval can take 24–72
 hours and everything else (bundle ID registration, App record, signing

@@ -6,6 +6,27 @@ A companion creature with real personality, memory, DNA, and evolution — drive
 
 ---
 
+## Screenshots
+
+<table>
+<tr>
+<td><img src="app-store-screenshots/1-home.png" width="210" alt="Home screen"></td>
+<td><img src="app-store-screenshots/2-chat.png" width="210" alt="Chat with the creature"></td>
+<td><img src="app-store-screenshots/3-memory.png" width="210" alt="Memory log"></td>
+<td><img src="app-store-screenshots/4-create.png" width="210" alt="Hatching a creature"></td>
+</tr>
+<tr>
+<td align="center">Home</td>
+<td align="center">Chat</td>
+<td align="center">Memory log</td>
+<td align="center">Hatch</td>
+</tr>
+</table>
+
+Captured on the 6.9-inch simulator from a Release build (1320×2868, the size App Store Connect requires).
+
+---
+
 ## Features
 
 | Category | Detail |
@@ -19,14 +40,14 @@ A companion creature with real personality, memory, DNA, and evolution — drive
 | 🧬 **Creature DNA** | Every creature has a unique genetic identity. Traits, personality, and appearance procedurally generated. |
 | 🧠 **Episodic Memory** | Rich event-based memories with mood context and stat snapshots. Stored memories are fed into the creature's prompt, and there is a memory viewer screen. Recall is only as good as the model — see [Known Limitations](#known-limitations). |
 | 🧫 **Epigenome** | Memories reshape gene expression over time. Happy memories → +social. Neglect → +resilience. Modifiers inherited at 70% strength. |
-| 💬 **Conversation** | Chat affects the creature — kind words boost happiness, mean words hurt (×15 negative multiplier). Real role-structured messages, so the model's own chat template applies. |
+| 💬 **Conversation** | Chat affects the creature — kind words boost happiness, mean words hurt (×15 negative multiplier). Real role-structured messages, so the model's own chat template applies. History feeds the prompt, and `[clear]` (or the `/clear` command) takes it back. |
 | 🦋 **Evolution** | Egg → Baby → Child → Teen → Adult (~18 days real time). 4 branches: Angel, Gremlin, Trickster, Sage. |
 | 💀 **Death** | Neglect leads to consequences — the creature can pass away if 3+ stats hit zero. |
 | 🧬 **DNA Export** | On death, export the creature's full DNA as a `.json` file via iOS Share sheet. Includes genotype, epigenome, memories. |
 | 📥 **DNA Import** | Hatch from inherited DNA — pick a `.json` file, species auto-detected. Single-parent inheritance with 70% epigenetic decay. |
 | ⏱️ **Real-time Clock** | Stats decay every 30s while the app is open. Age passes in real world time. |
 | 💾 **Persistent Storage** | MMKV — full creature state (stats, personality, stage, sleep) survives restarts and phone reboots. |
-| 🎨 **Voidling Egg Icon** | Dark inky egg with glowing amber eyes — pixel art on the terminal palette. |
+| 🎨 **App Icon** | Amber egg outline with big glossy eyes on warm black — full-bleed, no baked rounded corners, no transparency, so the system mask is the only shape. |
 | 🔒 **100% Offline** | No internet required. Everything on-device. Release build pre-compiles Hermes bytecode. |
 
 ---
@@ -162,9 +183,9 @@ Energy at 0 + 3 critical stats → creature passes away → gravestone screen �
 Small app, real gaps. Stated so nobody has to discover them:
 
 - **1B models recall literally.** The creature reliably names a memory when asked about it directly — *"do you remember when I scolded you?" → "you were cross with me... it still stings"* — but can miss a vague question like *"what did I just do?"*, answering atmospherically instead of with the event. It holds the memory; it does not always connect the question to it. Bigger models close this gap at the cost of download size and RAM, so 1.0 stays lean.
-- **Model downloads can stall on some networks.** HuggingFace redirects to a signed CDN, and on some paths (observed over QUIC/HTTP-3) the transfer stalls without ever erroring. A 45-second no-progress watchdog now turns that into a visible error instead of an hour-long hang. Retrying, or a different connection, works.
+- **Download progress is read from the filesystem, not from RNFS.** RNFS's `progress` event never fires on iOS 27 (New Architecture), so the percentage is derived from the size of CFNetwork's temp file. Before that, the picker showed 0% for the entire download while hundreds of megabytes were arriving — and a stall watchdog built on the missing event cancelled downloads that were working perfectly. Both are fixed; if you touch `downloadModel`, never trust that callback.
+- **The creature occasionally slips into the second person.** Asking *"do you remember when I scolded you?"* got `It still stings.` (correct) but also, once in about five tries, `You still hurt.` — narrating the owner instead of itself. Prompt wording reduces it; a 1B model does not eliminate it.
 - **The fallback engine is visible, never silent.** With no model loaded, the creature answers from a stage-aware template engine; the chat header names the engine that replied (`# engine: llama-3.2-1b`), so canned lines can't be mistaken for the LLM.
-- **No way to clear a conversation.** History feeds the prompt and only resets when the creature is replaced.
 - **iPhone only, no widget.** The widget is deferred to 1.1; its extension target is not in the 1.0 project.
 
 ---
@@ -186,13 +207,16 @@ Small app, real gaps. Stated so nobody has to discover them:
 - [x] DNA import with file picker + single-parent inheritance
 - [x] Epigenome — memories reshape gene expression
 - [x] Episodic memory + viewer
-- [x] Model download & management (SHA-256 verified, 45s stall watchdog)
+- [x] Model download & management (SHA-256 verified; progress measured on disk, see Known Limitations)
 - [x] Model persisted with the creature and reloaded on launch
 - [x] Chat header names the answering engine (never a silent fallback)
+- [x] Clear conversation (`[clear]` control and `/clear` command)
+- [x] Creatures age in real time — stages measured in days, not minutes
+- [x] Verified on a physical iPhone (download, SHA-256 verification, Metal inference, persistence across launches)
 - [x] MMKV persistence (full state, survives reboots)
 - [x] Real-time stat clock
 - [x] Release build with pre-compiled Hermes bytecode
-- [x] App icon (voidling egg, amber-on-black)
+- [x] App icon (amber egg, glossy eyes, amber-on-black; all 15 renditions, no alpha)
 - [ ] iOS Widget (deferred to v1.1 — the extension target was removed from the Xcode project for 1.0; the JS-side `WidgetExporter` and `WidgetBridge` are kept for it)
 - [ ] Android support
 - [ ] Notifications
