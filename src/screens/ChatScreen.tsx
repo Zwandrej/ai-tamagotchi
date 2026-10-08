@@ -11,7 +11,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useCreatureStore } from '../store/useCreatureStore';
 import { CreatureCard } from '../components/creature/CreatureCard';
 import { createConversation, addMessage, type ConversationState } from '../services/conversation/conversationManager';
-import { generateResponse, getLoadedModelId, onEngineChange } from '../services/creature/AIService';
+import { generateResponse, getLoadedModelId, onEngineChange, GENERATION_STALLED } from '../services/creature/AIService';
 import { Term } from '../theme';
 import type { ConversationMessage } from '../types/conversation';
 import type { CreatureState } from '../types/creature';
@@ -25,6 +25,7 @@ export function ChatScreen() {
   const [conv, setConv] = useState<ConversationState>(createConversation);
   const [happinessDelta, setHappinessDelta] = useState<number | null>(null);
   const [loadedModel, setLoadedModel] = useState<string | null>(getLoadedModelId());
+  const [stalled, setStalled] = useState(false);
 
   useEffect(() => onEngineChange(setLoadedModel), []);
   const flatListRef = useRef<FlatList<any>>(null);
@@ -33,9 +34,18 @@ export function ChatScreen() {
     const trimmed = inputText.trim();
     if (!trimmed || !creature) return;
     try {
+      setStalled(false);
       const beforeHap = creature.stats.happiness;
       const withUser = addMessage(conv, 'user', trimmed, creature);
       const response = await generateResponse(creature, trimmed, conv.messages.slice(-10));
+      if (response === GENERATION_STALLED) {
+        // Keep the owner's line, add no creature reply (it did not answer), and
+        // say what happened instead of leaving them guessing.
+        setConv(withUser);
+        setStalled(true);
+        setInputText('');
+        return;
+      }
       const withCreature = addMessage(withUser, 'creature', response, creature);
       setConv(withCreature);
       chat(trimmed, response);
@@ -103,6 +113,11 @@ export function ChatScreen() {
             ) : modelId && modelId !== 'apple-ondevice' ? (
               <Text style={styles.engineStatus}># loading {modelId}…</Text>
             ) : null}
+            {stalled && (
+              <Text style={[styles.engineStatus, { color: Term.red }]}>
+                # no reply — the model stopped responding. send it again
+              </Text>
+            )}
             {happinessDelta !== null && (
               <Text style={[styles.hapDelta, { color: happinessDelta >= 0 ? Term.green : Term.red }]}>
                 {/* Rounded: the delta is a float subtraction, and "+4.199999999999999 happiness"

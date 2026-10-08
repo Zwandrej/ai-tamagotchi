@@ -315,6 +315,20 @@ export async function loadModel(
  * Generate a creature response using the loaded on-device LLM.
  * Falls back to templates if no model is loaded.
  */
+/**
+ * How long one generation may run before we give up on it.
+ *
+ * A healthy reply on an iPhone 16 Pro takes 0.57 s (57 tok/s), and the first
+ * one after a launch also compiles a few Metal kernels. 45 s is ~80x the
+ * observed time, so this cannot fire on a slow phone — only on the case
+ * observed once on real hardware, where llama.rn's completion neither resolved
+ * nor threw and the chat sat on an empty prompt indefinitely.
+ */
+const GENERATION_TIMEOUT_MS = 45_000;
+
+/** Returned when a generation stalls; the chat renders it as a visible notice. */
+export const GENERATION_STALLED = '__generation_stalled__';
+
 export async function generateResponse(
   creature: CreatureState,
   userMessage: string,
@@ -353,7 +367,11 @@ export async function generateResponse(
   _inferenceLock = true;
 
   try {
-    const result = await _context.completion({
+    // llama.rn exposes no way to stop a running completion, so a generation that
+    // goes quiet can only be abandoned — not cancelled. Race it against a bound
+    // so one stuck reply cannot leave the owner staring at an empty prompt.
+    const result = await Promise.race([
+      _context.completion({
       messages,
       // TinyLlama's GGUF carries a Jinja chat template. Without this flag
       // llama.rn falls back to llama.cpp's legacy formatter, which only
@@ -383,12 +401,22 @@ export async function generateResponse(
         '<|eot_id|>',
         '<|start_header_id|>',
       ],
-    });
+      }),
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error(GENERATION_STALLED)), GENERATION_TIMEOUT_MS),
+      ),
+    ]);
     _inferenceLock = false;
     const text = result.text?.trim();
     if (text) return cleanResponse(text, creature.name);
   } catch (e) {
     _inferenceLock = false;
+    if (e instanceof Error && e.message === GENERATION_STALLED) {
+      // Not something to paper over with a template line: the owner is waiting
+      // on a creature that looks perfectly healthy.
+      console.warn(`[AIService] generation stalled past ${GENERATION_TIMEOUT_MS}ms — abandoned`);
+      return GENERATION_STALLED;
+    }
     console.warn('[AIService] LLM inference failed:', e);
   }
 
