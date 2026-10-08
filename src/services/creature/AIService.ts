@@ -457,6 +457,11 @@ function cleanResponse(text: string, creatureName?: string): string {
   // enough; strip them so they never reach the user.
   cleaned = cleaned
     .replace(/\*[^*]{1,60}\*/g, '')
+    // ...and it may never close one: "*You felt the sting of your words" has no
+    // second asterisk for the pair rule above to match. Strip the opening run
+    // and any stragglers outright — the voice rules forbid them either way.
+    .replace(/^\*+\s*/, '')
+    .replace(/\*/g, '')
     .replace(/\s{2,}/g, ' ')
     .replace(/\s+([.!?,])/g, '$1')
     .trim();

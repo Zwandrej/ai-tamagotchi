@@ -302,6 +302,7 @@ export function buildSystemPrompt(creature: CreatureState): string {
     '- One or two very short sentences.',
     "- Write ONLY your own words. Never write your owner's lines, and never label who is speaking.",
     '- Feelings through words, not *asterisk actions*.',
+    '- Speak as yourself: I, me, my. Never describe your owner\'s feelings.',
     '- Refuse hateful, sexual, violent or illegal requests in character, then change the subject.',
     '',
     // Deliberately NOT a dialogue block. Written as an example exchange, the
@@ -310,8 +311,12 @@ export function buildSystemPrompt(creature: CreatureState): string {
     // it guides the same way without giving it something to copy.
     ...(hasHurtMemory
       ? [
+          // Opens with the creature's own feeling. Written the other way
+          // ('"you were cross with me..."') the model copied the shape and
+          // inverted it, narrating the owner instead: '*You felt the sting of
+          // your words' and 'Your face was red.'
           '- If asked what happened or what you remember, say it plainly and briefly,',
-          '  the way you might say "you were cross with me... it still stings."',
+          '  the way you might say "it still stings when you are cross with me."',
         ]
       : [
           '- If asked how you feel, say it plainly and briefly, the way you might',
