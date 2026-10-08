@@ -26,7 +26,12 @@ let _inferenceLock = false; // serialize llama context access // modelId -> file
  * Model files are hundreds of megabytes, so a slow-but-alive transfer is
  * normal; a transfer with no progress at all for this long is not.
  */
-const DOWNLOAD_STALL_TIMEOUT_MS = 45_000;
+// How long the transfer may deliver no new byte *on disk* before we call it
+// dead. Measured against the filesystem, never against RNFS's progress
+// callback: that callback does not fire in this build, and a watchdog built on
+// it cancelled downloads that were transferring perfectly well — every
+// "stalled" attempt had 80-560 MB on disk behind it.
+const DOWNLOAD_STALL_TIMEOUT_MS = 90_000;
 
 // ──────────────────────────────────────────────────────────────
 // Public API
@@ -188,24 +193,63 @@ export async function downloadModel(
   // because an interrupted download also leaves a file behind.
   const exists = await RNFS.exists(destPath);
   if (!exists) {
+    // CFNetwork writes the transfer to a temp file and only moves it into
+    // place at the end, so that file's growing size is the honest measure of
+    // progress. RNFS's own progress event never arrives on iOS 27, which is why
+    // the percentage sat at 0% for entire downloads.
+    const tmpDir = RNFS.TemporaryDirectoryPath;
+    const preexisting = new Set<string>();
+    try {
+      for (const f of await RNFS.readDir(tmpDir)) {
+        if (f.name.startsWith('CFNetworkDownload_')) {
+          preexisting.add(f.name);
+          // Abandoned transfers leave these behind — the ones from our own
+          // cancelled attempts totalled over a gigabyte on a real iPhone.
+          await RNFS.unlink(`${tmpDir}/${f.name}`).catch(() => {});
+        }
+      }
+    } catch {
+      // An unreadable temp dir only costs us the percentage, not the download.
+    }
+
+    const bytesTransferred = async (): Promise<number> => {
+      const files = await RNFS.readDir(tmpDir);
+      return files
+        .filter((f) => f.name.startsWith('CFNetworkDownload_') && !preexisting.has(f.name))
+        .reduce((sum, f) => sum + (Number(f.size) || 0), 0);
+    };
+
     let lastBytes = 0;
-    let lastProgressAt = Date.now();
+    let lastGrowthAt = Date.now();
+    const watcher = setInterval(async () => {
+      try {
+        const bytes = await bytesTransferred();
+        if (bytes > lastBytes) {
+          lastBytes = bytes;
+          lastGrowthAt = Date.now();
+        }
+        if (model.sizeBytes > 0) {
+          // 99 is the ceiling: the last percent belongs to verification.
+          onProgress?.(Math.min(99, Math.floor((bytes / model.sizeBytes) * 100)), 'download');
+        }
+      } catch {
+        // Ignore: the poll is best-effort and runs again in a second.
+      }
+    }, 1000);
+
     let stallTimer: ReturnType<typeof setInterval> | null = null;
 
     const { promise, jobId } = RNFS.downloadFile({
       fromUrl: model.url,
       toFile: destPath,
+      // Kept for platforms where this event does fire. On iOS 27 it does not,
+      // so the percentage above comes from the disk watcher instead.
       progress: (res) => {
-        if (res.bytesWritten !== lastBytes) {
-          lastBytes = res.bytesWritten;
-          lastProgressAt = Date.now();
-        }
         if (res.contentLength > 0) {
           const pct = Math.round((res.bytesWritten / res.contentLength) * 100);
-          onProgress?.(Math.min(100, pct), 'download');
+          onProgress?.(Math.min(99, pct), 'download');
         }
       },
-      progressDivider: 10,
     });
 
     try {
@@ -218,7 +262,7 @@ export async function downloadModel(
         promise,
         new Promise<never>((_, reject) => {
           stallTimer = setInterval(() => {
-            if (Date.now() - lastProgressAt >= DOWNLOAD_STALL_TIMEOUT_MS) {
+            if (Date.now() - lastGrowthAt >= DOWNLOAD_STALL_TIMEOUT_MS) {
               if (stallTimer) clearInterval(stallTimer);
               RNFS.stopDownload(jobId);
               reject(
@@ -238,6 +282,7 @@ export async function downloadModel(
         throw new Error(`Download failed: ${result.statusCode}`);
       }
     } finally {
+      clearInterval(watcher);
       if (stallTimer) clearInterval(stallTimer);
     }
   }
