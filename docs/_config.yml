@@ -1,0 +1,13 @@
+title: AI Tamagotchi
+description: An AI-powered digital pet that runs entirely on your iPhone.
+theme: jekyll-theme-minimal
+
+# Internal working documents. They live in this folder for the developer, but
+# they should not be published as part of the public site — this folder is the
+# GitHub Pages source, so anything not excluded here becomes a public URL.
+exclude:
+  - app-store-submission.md
+  - model-compatibility.md
+  - creature-dna.md
+  - on-device-llm-guide.md
+  - widget-design.md
