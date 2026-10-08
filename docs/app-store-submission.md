@@ -14,7 +14,7 @@ the review questions. Values marked `<...>` need your input.
 | 3 | **CocoaPods** installed | ✅ 1.17.0 (`unset GEM_HOME GEM_PATH RUBYOPT` before `pod`/`xcodebuild`) |
 | 4 | Bundle ID `com.zwitter.aitamagotchi` registered in the developer portal | ⬜ needs enrolment |
 | 5 | App record created in App Store Connect | ⬜ needs enrolment |
-| 6 | Privacy policy + support pages publicly reachable | ⬜ docs written, not hosted |
+| 6 | Privacy policy + support pages publicly reachable | ✅ https://zwandrej.github.io/ai-tamagotchi/privacy.html and /support.html |
 | 7 | Verified on a real iPhone | ✅ iPhone 16 Pro, iOS 27.0.1 — downloads, SHA-256 verification, Metal inference and persistence all confirmed |
 
 ### 0.1 The enrolment blocker
@@ -26,6 +26,11 @@ order — the first one is the usual culprit:
    — the *storefront*, which is separate from the billing address.
 2. **VPN or proxy** active on the device or router — exit node country wins.
 3. A stale pending order — contact developer.apple.com/contact.
+
+**Enrol from the Apple Developer app on the iPhone, not the website.** The app
+uses the device's own App Store account and storefront, so it sidesteps the web
+checkout that showed the wrong country. Individual enrolment is $99/yr; the
+agreement and payment happen in the app.
 
 Everything else is ready to go the moment this clears: the app builds, signs and
 runs on-device, and the store assets are done.
@@ -145,9 +150,15 @@ First release.
 
 | Field | Value |
 |---|---|
-| Support URL | `https://<your-github-username>.github.io/ai-tamagotchi/support.html` (or the repo issues page) |
-| Marketing URL | `https://github.com/Zwandrej/ai-tamagotchi` |
-| Privacy Policy URL | `https://<your-github-username>.github.io/ai-tamagotchi/privacy.html` |
+| Support URL | `https://zwandrej.github.io/ai-tamagotchi/support.html` |
+| Marketing URL | `https://zwandrej.github.io/ai-tamagotchi/` (or the repo) |
+| Privacy Policy URL | `https://zwandrej.github.io/ai-tamagotchi/privacy.html` |
+
+All three are live: GitHub Pages serves the `/docs` folder on `main`, and
+`docs/_config.yml` excludes the internal documents in that folder (this
+submission pack, the model, DNA and widget notes) from the published site — they
+are in the repo, not on a public URL. Verified: `privacy.html` and `support.html`
+return 200, the excluded files return 404.
 
 **Hosting:** the policy and support pages are committed as `docs/privacy.md`
 and `docs/support.md`. To publish them, enable GitHub Pages for the repo:
