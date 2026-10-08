@@ -2,7 +2,7 @@
  * CreateCreatureScreen — Terminal-style creature init.
  */
 
-import React, { useState } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity,
   ScrollView, StyleSheet, Alert,
@@ -14,7 +14,7 @@ import { useCreatureStore } from '../store/useCreatureStore';
 import { createCreature } from '../services/creature/creatureEngine';
 import { renderCreature } from '../services/creature/asciiRenderer';
 import { MODELS, type ModelInfo } from '../services/creature/ModelManager';
-import { isModelDownloaded, downloadModel, loadModel, getModelPath, getDownloadedModelIds } from '../services/creature/AIService';
+import { isModelDownloaded, downloadModel, loadModel, getModelPath, hydrateDownloadedModels, pickDefaultModelId } from '../services/creature/AIService';
 import { importDNA, buildDNAExport } from '../services/creature/dna';
 import DocumentPicker from 'react-native-document-picker';
 import { Term } from '../theme';
@@ -35,9 +35,25 @@ export function CreateCreatureScreen() {
   const [modelId, setModelId] = useState<string>(() => {
     const previous = useCreatureStore.getState().modelId;
     if (previous && previous !== 'apple-ondevice') return previous;
-    const downloaded = getDownloadedModelIds();
-    return downloaded.length === 1 ? downloaded[0]! : MODELS[0]!.id;
+    return pickDefaultModelId();
   });
+  // The filesystem scan is asynchronous, so at first paint it can still be
+  // empty — and the picker then offers the built-in engine on a phone that has
+  // a model sitting right there, which is how creatures ended up answering from
+  // templates. Adopt the model once the scan answers, unless a choice was made.
+  const pickedByUser = useRef(false);
+  useEffect(() => {
+    let alive = true;
+    hydrateDownloadedModels()
+      .then(() => {
+        if (!alive || pickedByUser.current) return;
+        const previous = useCreatureStore.getState().modelId;
+        if (previous && previous !== 'apple-ondevice') return;
+        setModelId(pickDefaultModelId());
+      })
+      .catch(() => {});
+    return () => { alive = false; };
+  }, []);
   const [downloadPct, setDownloadPct] = useState<Record<string, number>>({});
   const [downloading, setDownloading] = useState<string | null>(null);
   const [verifying, setVerifying] = useState<string | null>(null);
@@ -94,6 +110,7 @@ export function CreateCreatureScreen() {
   };
 
   const handleSelectModel = async (id: string) => {
+    pickedByUser.current = true;
     setModelId(id);
     const model = MODELS.find(m => m.id === id);
     if (!model || !model.url) return;

@@ -53,6 +53,20 @@ export function getDownloadedModelIds(): string[] {
   return [..._downloadedModels.keys()];
 }
 
+/**
+ * The model a new creature should default to: the catalog's recommendation if
+ * it is on disk, otherwise a lone downloaded model, otherwise the built-in
+ * engine. Must be called after the filesystem scan resolves — asking earlier
+ * always looks like "no models".
+ */
+export function pickDefaultModelId(): string {
+  const downloaded = getDownloadedModelIds();
+  const recommended = MODELS.find(m => m.recommended && downloaded.includes(m.id));
+  if (recommended) return recommended.id;
+  if (downloaded.length === 1) return downloaded[0]!;
+  return MODELS[0]!.id;
+}
+
 /** The model actually answering right now, or null for the built-in engine. */
 export function getLoadedModelId(): string | null {
   return _context ? _activeModelId : null;
@@ -71,7 +85,17 @@ function modelFilePath(modelId: string): string {
  * creature's model could not be found to load. The files are the truth; ask
  * them instead of a variable.
  */
-export async function hydrateDownloadedModels(): Promise<string[]> {
+let _hydration: Promise<string[]> | null = null;
+
+export function hydrateDownloadedModels(): Promise<string[]> {
+  // Memoised: the create screen and the startup restore both ask, and a second
+  // scan would race the first — a caller arriving early would be told there are
+  // no models while the first scan was still running.
+  if (!_hydration) _hydration = _scanForModels();
+  return _hydration;
+}
+
+async function _scanForModels(): Promise<string[]> {
   const found: string[] = [];
   for (const model of MODELS) {
     if (!model.url) continue;

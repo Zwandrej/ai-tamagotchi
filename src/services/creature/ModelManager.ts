@@ -23,6 +23,8 @@ export interface ModelInfo {
   sha256: string;    // SHA-256 of that exact upstream artifact (verified after download)
   sizeBytes: number; // Exact upstream byte size — checked before hashing (0 = no download)
   description: string;
+  /** The catalog's recommended pick, used as the default for a new creature. */
+  recommended?: boolean;
 }
 
 /** Curated list of models suitable for mobile — always available */
@@ -40,6 +42,7 @@ export const MODELS: ModelInfo[] = [
   },
   {
     id: 'llama-3.2-1b',
+    recommended: true,
     name: 'Llama 3.2 1B',
     size: '0.7 GB',
     sizeBytes: 807694464,
