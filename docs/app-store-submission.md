@@ -153,6 +153,7 @@ First release.
 | Support URL | `https://zwandrej.github.io/ai-tamagotchi/support.html` |
 | Marketing URL | `https://zwandrej.github.io/ai-tamagotchi/` (or the repo) |
 | Privacy Policy URL | `https://zwandrej.github.io/ai-tamagotchi/privacy.html` |
+| User Privacy Choices URL | `https://zwandrej.github.io/ai-tamagotchi/data-choices.html` |
 
 All three are live: GitHub Pages serves the `/docs` folder on `main`, and
 `docs/_config.yml` excludes the internal documents in that folder (this
