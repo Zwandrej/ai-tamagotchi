@@ -22,4 +22,5 @@ on-device — no cloud, no accounts, and nothing leaves your device.
 
 - [Support](support.html)
 - [Privacy Policy](privacy.html)
+- [Your privacy choices](data-choices.html)
 - [Source code on GitHub](https://github.com/Zwandrej/ai-tamagotchi)

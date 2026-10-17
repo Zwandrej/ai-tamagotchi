@@ -89,6 +89,10 @@ no information from anyone, it collects no information from children.
 Because we never receive your data, there is nothing for us to delete on your
 behalf and no data request to make.
 
+A standalone summary of every choice you have — and the choices that do not apply
+because nothing is collected — is published at
+[Your privacy choices](data-choices.html).
+
 ## 8. Changes to this policy
 
 If this policy changes, the updated version will be published at this URL with
