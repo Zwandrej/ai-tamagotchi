@@ -187,6 +187,7 @@ Small app, real gaps. Stated so nobody has to discover them:
 - **The creature occasionally slips into the second person.** Asking *"do you remember when I scolded you?"* got `It still stings.` (correct) but also, once in about five tries, `You still hurt.` — narrating the owner instead of itself. Prompt wording reduces it; a 1B model does not eliminate it.
 - **The fallback engine is visible, never silent.** With no model loaded, the creature answers from a stage-aware template engine; the chat header names the engine that replied (`# engine: llama-3.2-1b`), so canned lines can't be mistaken for the LLM.
 - **iPhone only, no widget.** The widget is deferred to 1.1; its extension target is not in the 1.0 project.
+- **Hermes crash frames are unsymbolicated.** `hermesvm.framework` ships as a stripped prebuilt binary and Meta publishes no dSYM for it, so Xcode reports *"The archive did not include a dSYM for the hermesvm.framework"* on upload. The upload itself succeeds; only the symbol upload is skipped. Consequences are limited to crash reports: any crash inside the JavaScript engine shows addresses instead of function names. There is no crash SDK and no analytics, so this affects Apple's own reports only.
 
 ---
 

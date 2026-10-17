@@ -291,6 +291,25 @@ open ios/AITamagotchi.xcworkspace
 
 ### Notes for this project (Xcode 26/27 era)
 
+- **Expect "Upload Symbols Failed" for `hermesvm.framework` — it does not block
+  the upload.** Xcode reports *"The archive did not include a dSYM for the
+  hermesvm.framework with the UUIDs [...]"* after the binary has already been
+  accepted by App Store Connect. This is a React Native fact of life, not a
+  project defect: Hermes ships as a stripped prebuilt binary
+  (`Pods/hermes-engine/destroot/.../hermesvm.xcframework`), Meta publishes no
+  dSYM, and `dsymutil` cannot rebuild one — the object files it would need only
+  ever existed on Meta's CI. Both the release and debug artefacts were checked;
+  neither contains a dSYM. Options if the symbol gap ever matters: craft a
+  UUID-matched (symbol-less) dSYM to silence the validator, or rebuild with
+  Hermes statically linked. Neither adds real symbols to the framework.
+- **The verified upload path is `xcodebuild archive` + `xcodebuild
+  -exportArchive`, not the Xcode GUI.** Archive for `generic/platform=iOS` with
+  `-allowProvisioningUpdates`, then export with `method=app-store-connect`. The
+  archive signs with *Apple Development* and the export re-signs with *Apple
+  Distribution* and the Store profile (`get-task-allow=false`,
+  `beta-reports-active=true`) — that is the artefact that goes to App Store
+  Connect.
+
 - **The UIScene lifecycle is mandatory.** Apps built with the iOS 26+ SDK are
   refused at launch without it: *"Application failed to launch: UIScene life
   cycle is required for apps built with this SDK."* React Native 0.82's
