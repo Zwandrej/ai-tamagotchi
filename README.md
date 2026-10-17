@@ -4,7 +4,7 @@
 
 A companion creature with real personality, memory, DNA, and evolution — driven by a local LLM running directly on your phone via `llama.rn`. No cloud. No API keys. No data leaves your device.
 
-<img src="app-store-screenshots/readme-hero.png" width="100%" alt="AI Tamagotchi — a glowing amber pixel creature on a dark terminal background">
+<img src="app-store-screenshots/readme-hero.jpg" width="100%" alt="AI Tamagotchi — a glowing amber pixel creature on a dark terminal background">
 
 ---
 
